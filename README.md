@@ -132,10 +132,10 @@ Ride as you would with the stock dashboard. If anything on screen looks wrong, s
 
 [**OpenDash Companion**](https://github.com/abhijithvijayan/opendash-companion) is an Android app that installs OpenDash over the scooter's own network. No computer, no command line.
 
-1. On an Android phone (Android 10 or later), download the latest `opendash-companion-<version>.apk` from [OpenDash Companion releases](https://github.com/abhijithvijayan/opendash-companion/releases/latest) and install it.
+1. **Get the app, once.** OpenDash Companion isn't on the Play Store: on an Android phone (Android 10 or later), open [its latest release](https://github.com/abhijithvijayan/opendash-companion/releases/latest), download `opendash-companion-<version>.apk` and install it. From then on it updates itself.
 2. Put the phone on the same Wi-Fi as the scooter, on the scooter's hotspot, or share the phone's hotspot with the scooter.
 3. Open the app, tap **Scan** (or type the scooter's address) and connect. If the scooter doesn't accept the phone yet, the app shows the phone's adb key to add (see [Before You Install](#before-you-install)).
-4. With the scooter parked, tap **Install OpenDash**. The app downloads the latest release, checks it against OpenDash's release key (below), installs it, sets the display density, turns off the screensaver, makes OpenDash the home screen and starts it.
+4. With the scooter parked, tap **Install OpenDash**. You don't download OpenDash yourself: the app fetches the latest release, checks it against OpenDash's release key (below), installs it, sets the display density, turns off the screensaver, makes OpenDash the home screen and starts it.
 
 The same app tells you when a new OpenDash is out and installs it, installs a build from a file, removes OpenDash and puts the stock dashboard back, and lets you remove other apps installed on the scooter.
 
@@ -255,7 +255,11 @@ OpenDash can also open the stock dashboard from **Settings → Developer**.
 
 ## Pulling Logs for a Bug Report
 
-OpenDash keeps a local log of what happened on the scooter, to make bugs easier to find. Nothing is uploaded. To copy it to your computer:
+OpenDash keeps a local log of what happened on the scooter, to make bugs easier to find. Nothing is uploaded.
+
+**From your phone:** in OpenDash Companion, connect to the scooter and tap **Share logs**. It zips OpenDash's log with the app's own and opens the share sheet, so you can save it or attach it to an issue. **Report a problem** opens a new issue with the versions filled in.
+
+**From a computer:**
 
 ```bash
 bash scripts/pull-logs.sh <scooter-ip>
