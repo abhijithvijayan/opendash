@@ -120,15 +120,35 @@ Ride as you would with the stock dashboard. If anything on screen looks wrong, s
 
 ## Before You Install
 
-- **You need adb access to the scooter's head unit.** The scooter does not offer this out of the box. How to get it on a Gen 1 is described in [ola-s1-pro-gen1](https://github.com/abhijithvijayan/ola-s1-pro-gen1#getting-access). [Axiom](#or-install-from-your-phone-with-axiom) can also install OpenDash from your phone. Only do this on a scooter you own.
+- **You need adb access to the scooter's head unit.** The scooter does not offer this out of the box. How to get it on a Gen 1 is described in [ola-s1-pro-gen1](https://github.com/abhijithvijayan/ola-s1-pro-gen1#getting-access). [OpenDash Companion](#with-your-phone-recommended) shows the phone's adb key to add once you have it. Only do this on a scooter you own.
 - **The stock dashboard stops while OpenDash is the home screen.** On Gen 1, a few stock services are started only by the stock dashboard and do not run under OpenDash: cloud notifications, AI range, AI indicator auto-off, group rides and the built-in navigation.
 - **Everything behind the dashboard keeps running as before**: the scooter's telemetry and its uploads to the manufacturer, remote commands from the phone app, the scooter's firmware updater, the motor sound and chimes. The one exception is OTA Shield, a separate app you can choose to install; see [Scooter Firmware Updates and OTA Shield](#scooter-firmware-updates-and-ota-shield).
-- **The install script changes the head unit's display density.** Uninstalling puts it back.
+- **Installing changes the head unit's display density.** Uninstalling puts it back.
 - **It may affect your warranty.** Read the [disclaimer](#disclaimer).
 
 ## Installing
 
-### 1. Get the tools
+### With your phone (recommended)
+
+[**OpenDash Companion**](https://github.com/abhijithvijayan/opendash-companion) is an Android app that installs OpenDash over the scooter's own network. No computer, no command line.
+
+1. On an Android phone (Android 10 or later), download the latest `opendash-companion-<version>.apk` from [OpenDash Companion releases](https://github.com/abhijithvijayan/opendash-companion/releases/latest) and install it.
+2. Put the phone on the same Wi-Fi as the scooter, on the scooter's hotspot, or share the phone's hotspot with the scooter.
+3. Open the app, tap **Scan** (or type the scooter's address) and connect. If the scooter doesn't accept the phone yet, the app shows the phone's adb key to add (see [Before You Install](#before-you-install)).
+4. With the scooter parked, tap **Install OpenDash**. The app downloads the latest release, checks it against OpenDash's release key (below), installs it, sets the display density, turns off the screensaver, makes OpenDash the home screen and starts it.
+
+The same app tells you when a new OpenDash is out and installs it, installs a build from a file, removes OpenDash and puts the stock dashboard back, and lets you remove other apps installed on the scooter.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/abhijithvijayan/opendash-companion/main/screenshots/scooter.png" width="240" alt="OpenDash Companion: the scooter screen with Install OpenDash" />
+  <img src="https://raw.githubusercontent.com/abhijithvijayan/opendash-companion/main/screenshots/done.png" width="240" alt="OpenDash Companion: every install step checked off" />
+</p>
+
+### With a computer
+
+For developers, and for anyone who'd rather use adb and the scripts in this repository.
+
+#### 1. Get the tools
 
 | Tool | What it's for | macOS | Windows | Linux |
 |------|--------------|-------|---------|-------|
@@ -137,7 +157,7 @@ Ride as you would with the stock dashboard. If anything on screen looks wrong, s
 
 On Windows, run the scripts from Git Bash or WSL.
 
-### 2. Connect to the scooter
+#### 2. Connect to the scooter
 
 Your computer and the scooter must be on the **same Wi-Fi network**. Find the scooter's IP address in your router's list of connected devices, or with a network scanner app such as [Fing](https://www.fing.com/products/fing-app).
 
@@ -148,11 +168,11 @@ adb connect <scooter-ip>:5555
 adb -s <scooter-ip>:5555 shell echo ok
 ```
 
-### 3. Download OpenDash
+#### 3. Download OpenDash
 
 Download the latest `opendash-<version>.apk` from [Releases](https://github.com/abhijithvijayan/opendash/releases/latest) into a folder.
 
-### 4. Check the download (recommended)
+#### 4. Check the download (recommended)
 
 Every official release is signed with one key. The SHA-256 fingerprint of its certificate is:
 
@@ -168,7 +188,7 @@ apksigner verify --print-certs opendash-<version>.apk | grep SHA-256
 
 The package name is `in.abhijithvijayan.opendash`. An APK with that name signed by any other key is not an official build. Android also refuses to install an update signed by a different key over an installed one.
 
-### 5. Install
+#### 5. Install
 
 ```bash
 git clone https://github.com/abhijithvijayan/opendash.git
@@ -191,15 +211,15 @@ adb -s <scooter-ip>:5555 shell am start -n in.abhijithvijayan.opendash/.MainActi
 
 </details>
 
-#### Or install from your phone with Axiom
+### Or install from your phone with Axiom
 
-[Axiom](https://codeberg.org/pitzel/axiom), an Android app by Jacob, one of OpenDash's beta testers, can install the APK you downloaded in step 3 straight from your phone, with no computer. It connects to the scooter over your phone's hotspot. See its README for what it needs and which scooters it works with. The install script above also sets the display density, turns off the screensaver and makes OpenDash the home screen, so make sure those are done too.
+[Axiom](https://codeberg.org/pitzel/axiom), an Android app by Jacob, one of OpenDash's beta testers, can also install an OpenDash APK you downloaded straight from your phone, with no computer. It connects to the scooter over your phone's hotspot. See its README for what it needs and which scooters it works with. OpenDash Companion and the install script also set the display density, turn off the screensaver and make OpenDash the home screen, so make sure those are done too.
 
 ## Updating
 
 OpenDash checks this repository's releases by itself. When a new version is out, it offers it in **Settings → Updates**, downloads it, and hands it to Android's installer, which asks you to confirm. Updates are offered only while the scooter is parked.
 
-You can also install a newer APK with `scripts/install.sh` as above, at any time.
+OpenDash Companion also tells you when a new version is out, each time you open it, and installs it from your phone. From a computer, install a newer APK with `scripts/install.sh` as above, at any time.
 
 ## Scooter Firmware Updates and OTA Shield
 
@@ -217,7 +237,9 @@ If OTA Shield cannot start its block when the scooter powers on, its fail-safe m
 
 ## Going Back to the Stock Dashboard
 
-To make the stock dashboard the home screen again and remove OpenDash:
+In OpenDash Companion, tap **Uninstall OpenDash**. It gives the home screen back to the stock dashboard and resets the display density.
+
+From a computer, to make the stock dashboard the home screen again and remove OpenDash:
 
 ```bash
 bash scripts/uninstall.sh <scooter-ip>
@@ -277,6 +299,7 @@ A build signed with your own key cannot be installed over a release build, and t
 
 ## Related Projects
 
+- [**OpenDash Companion**](https://github.com/abhijithvijayan/opendash-companion): the Android phone app that installs, updates and removes OpenDash
 - [**ola-s1-pro-gen1**](https://github.com/abhijithvijayan/ola-s1-pro-gen1): research notes and access tools for the Gen 1 head unit
 - [**OlaMate**](https://github.com/abhijithvijayan/olamate): battery health and ride telemetry logger
 - [**Axiom**](https://codeberg.org/pitzel/axiom): CAN telemetry, fault reader and system tool for Ola scooters, an Android app that can also install OpenDash
