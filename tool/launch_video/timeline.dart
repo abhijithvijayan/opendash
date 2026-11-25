@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/widgets.dart' show Offset;
+
 import 'package:opendash/models/vehicle_data.dart';
 import 'package:opendash/screens/diagnostics/diagnostics_screen.dart';
 import 'package:opendash/state/apps_state.dart';
@@ -31,6 +33,8 @@ class Scene {
     this.fadeToBlack = false,
     this.enter,
     this.tick,
+    this.zoom = 1,
+    this.focus = const Offset(640, 384),
   });
 
   final String id;
@@ -57,7 +61,50 @@ class Scene {
   /// Once per frame, [t] seconds into the scene.
   final FutureOr<void> Function(Director d, double t)? tick;
 
+  /// The reel's crop: how much larger than full width the dash is drawn,
+  /// and which point of the 1280x768 dash sits in the middle.
+  final double zoom;
+  final Offset focus;
+
+  /// The same footage at another length: its motion runs faster or slower to fit.
+  Scene recut(
+    double seconds, {
+    SceneKind? kind,
+    String? title,
+    String? subtitle,
+    String? footnote,
+    String? kicker,
+    double? zoom,
+    Offset? focus,
+    double? dashOpacity,
+    bool? fadeFromBlack,
+    List<double>? wordAt,
+  }) {
+    final warp = this.seconds / seconds;
+    final t = tick;
+    return Scene(
+      id,
+      seconds,
+      kind: kind ?? this.kind,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      footnote: footnote,
+      kicker: kicker ?? this.kicker,
+      titleSize: titleSize,
+      words: words,
+      wordAt: wordAt ?? [for (final w in this.wordAt) w / warp],
+      dashOpacity: dashOpacity ?? this.dashOpacity,
+      fadeFromBlack: fadeFromBlack ?? this.fadeFromBlack,
+      fadeToBlack: fadeToBlack,
+      enter: enter,
+      tick: t == null ? null : (d, s) => t(d, s * warp),
+      zoom: zoom ?? this.zoom,
+      focus: focus ?? this.focus,
+    );
+  }
 }
+
+Scene sceneById(String id) => timeline.firstWhere((s) => s.id == id);
 
 /// One beat of the music (93.96 bpm, from beats.py). Every scene is a whole
 /// number of beats long, so every cut lands on one.
@@ -184,7 +231,7 @@ final timeline = <Scene>[
     enter: (d) => d.ride(mode: DriveMode.normal, soc: 76),
     tick: (d, t) async {
       d.drive(_cruising(t, 46), 2.0 + 0.5 * math.sin(t * 1.4));
-      if ((t * 60).round() == 96) await d.tapKey('range');
+      if (t >= 1.6 && d.once('range-tap')) await d.tapKey('range');
     },
   ),
   Scene(

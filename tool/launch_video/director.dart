@@ -22,6 +22,11 @@ class Director {
   final WidgetTester tester;
   final ProviderContainer container;
 
+  final _done = <String>{};
+
+  /// True the first time it is asked for [key].
+  bool once(String key) => _done.add(key);
+
   VehicleNotifier get vehicle => container.read(vehicleProvider.notifier);
   VehicleData get data => container.read(vehicleProvider);
 

@@ -16,19 +16,23 @@ import 'package:opendash/state/settings_state.dart';
 import 'director.dart';
 import 'fonts.dart';
 import 'frame.dart';
+import 'reel_timeline.dart';
 import 'timeline.dart';
 
 const frameStep = Duration(microseconds: 1000000 ~/ 60);
 
 /// Every frame, for the encoder. Without it: three stills per scene.
 const full = bool.fromEnvironment('OPENDASH_VIDEO_FULL');
-const out = 'build/launch_video';
+/// The vertical cut for Shorts and Reels instead of the landscape video.
+const reel = bool.fromEnvironment('OPENDASH_VIDEO_REEL');
+const out = reel ? 'build/launch_video/reel' : 'build/launch_video';
+final scenes = reel ? reelTimeline : timeline;
 
 void main() {
   testWidgets('render the launch video', timeout: Timeout.none, (tester) async {
     expect(const bool.fromEnvironment('OPENDASH_NO_DEV_PANEL'), isTrue, reason: 'run through build.sh');
     await loadVideoFonts();
-    tester.view.physicalSize = videoSize;
+    tester.view.physicalSize = reel ? reelSize : videoSize;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final start = DateTime(2026, 11, 24, 10, 24);
@@ -44,13 +48,13 @@ void main() {
       platform.grant(a.name);
     }
     final key = GlobalKey();
-    final lengths = sceneFrames(timeline);
-    final state = ValueNotifier(FrameState(timeline.first, 0, lengths.first));
+    final lengths = sceneFrames(scenes);
+    final state = ValueNotifier(FrameState(scenes.first, 0, lengths.first));
     await tester.pumpWidget(RepaintBoundary(
       key: key,
-      child: VideoFrame(
-        state: state,
-        dash: ProviderScope(
+      child: _frame(
+        state,
+        ProviderScope(
           overrides: [platformServiceProvider.overrideWithValue(platform)],
           child: const Stack(
             fit: StackFit.expand,
@@ -79,8 +83,8 @@ void main() {
 
     final dir = Directory(full ? '$out/frames' : '$out/stills');
     if (dir.existsSync()) dir.deleteSync(recursive: true);
-    for (var i = 0; i < timeline.length; i++) {
-      final scene = timeline[i];
+    for (var i = 0; i < scenes.length; i++) {
+      final scene = scenes[i];
       final frames = lengths[i];
       await scene.enter?.call(d);
       for (var f = 0; f < frames; f++) {
@@ -96,8 +100,11 @@ void main() {
         filmed++;
       }
     }
-    expect(filmed, totalFrames(timeline));
+    expect(filmed, totalFrames(scenes));
     // ignore: avoid_print
     print('filmed $filmed frames, ${(filmed / 60).toStringAsFixed(1)} s');
   });
 }
+
+Widget _frame(ValueNotifier<FrameState> state, Widget dash) =>
+    reel ? ReelFrame(state: state, dash: dash) : VideoFrame(state: state, dash: dash);

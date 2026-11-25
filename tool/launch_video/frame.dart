@@ -255,3 +255,195 @@ class _EndCard extends StatelessWidget {
     );
   }
 }
+
+const reelSize = Size(1080, 1920);
+
+/// The vertical cut for Shorts and Reels. Words sit in the top band, clear of
+/// the app's own buttons along the bottom and the right edge.
+class ReelFrame extends StatelessWidget {
+  const ReelFrame({super.key, required this.state, required this.dash});
+
+  final ValueListenable<FrameState> state;
+  final Widget dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: ColoredBox(
+        color: _ink,
+        child: ValueListenableBuilder<FrameState>(
+          valueListenable: state,
+          builder: (context, s, _) {
+            final scene = s.scene;
+            final card = scene.kind == SceneKind.endCard;
+            final push = 1 + 0.02 * s.frame / s.frames;
+            final w = 1040 * scene.zoom * push, h = w * 0.6;
+            // The dash is seen through a window under the words; a zoomed
+            // dash is cropped by it rather than running into them.
+            const winTop = 700.0, winHeight = 820.0;
+            final left = 540 - scene.focus.dx * w / 1280;
+            final top = winHeight / 2 - scene.focus.dy * h / 768;
+            return Stack(
+              children: [
+                if (!card)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: scene.kind == SceneKind.claims ? 550 : winTop,
+                    height: winHeight,
+                    child: ClipRect(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            left: left,
+                            top: top,
+                            width: w,
+                            height: h,
+                            child: Opacity(
+                              opacity: scene.dashOpacity,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(30 * scene.zoom),
+                                child: FittedBox(child: SizedBox(width: 1280, height: 768, child: dash)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (scene.kind == SceneKind.dashWithCaption || scene.kind == SceneKind.titleCard)
+                  Positioned(
+                    left: 70,
+                    right: 110,
+                    top: 200,
+                    height: 470,
+                    child: Opacity(
+                      opacity: s.edge(10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (scene.kicker != null) ...[
+                            Text(scene.kicker!.toUpperCase(), style: _wide(30, color: _accent, weight: 600, spacing: 7)),
+                            const SizedBox(height: 18),
+                          ],
+                          Text(scene.title, textAlign: TextAlign.center, style: _wide(scene.kind == SceneKind.titleCard ? 104 : 58, weight: 750, width: 106)),
+                          if (scene.subtitle != null) ...[
+                            const SizedBox(height: 18),
+                            Text(scene.subtitle!, textAlign: TextAlign.center, style: _wide(36, color: _muted, weight: 450, width: 100).copyWith(height: 1.25)),
+                          ],
+                          if (scene.footnote != null) ...[
+                            const SizedBox(height: 12),
+                            Text(scene.footnote!, textAlign: TextAlign.center, style: _wide(27, color: _muted.withValues(alpha: 0.85), weight: 400, width: 100).copyWith(height: 1.25)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                if (scene.kind == SceneKind.claims)
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: math.min(1, (s.frames - 1 - s.frame) / 10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (var i = 0; i < scene.words.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Opacity(
+                                opacity: s.fadeIn(scene.wordAt[i], 0.2),
+                                child: Transform.translate(
+                                  offset: Offset(0, 30 * (1 - s.fadeIn(scene.wordAt[i], 0.25))),
+                                  child: Text(scene.words[i], textAlign: TextAlign.center, style: _wide(112, weight: 800, width: 118)),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (card) Positioned.fill(child: _ReelEndCard(s)),
+                if (scene.fadeFromBlack || scene.fadeToBlack)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: ColoredBox(
+                        color: _ink.withValues(
+                          alpha: math.max(
+                            scene.fadeFromBlack ? 1 - (s.seconds / 0.35).clamp(0.0, 1.0) : 0.0,
+                            scene.fadeToBlack ? 1 - ((s.frames - s.frame) / 60 / 1.2).clamp(0.0, 1.0) : 0.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ReelEndCard extends StatelessWidget {
+  const _ReelEndCard(this.s);
+  final FrameState s;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(70, 330, 110, 0),
+      child: Column(
+        children: [
+          Opacity(opacity: s.fadeIn(0.05, 0.4), child: Text('OpenDash', style: _wide(124, weight: 800, width: 118))),
+          const SizedBox(height: 16),
+          Opacity(
+            opacity: s.fadeIn(0.5),
+            child: Text('NOW AVAILABLE IN BETA', style: _wide(38, color: _accent, weight: 650, spacing: 6)),
+          ),
+          const SizedBox(height: 70),
+          Opacity(
+            opacity: s.fadeIn(1.0),
+            child: Column(
+              children: [
+                Text('Free and open source', style: _wide(44, weight: 600, width: 105)),
+                const SizedBox(height: 14),
+                Text('github.com/abhijithvijayan/opendash', textAlign: TextAlign.center, style: _wide(34, color: _muted, weight: 500, width: 100)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 70),
+          Opacity(
+            opacity: s.fadeIn(1.6),
+            child: Column(
+              children: [
+                Text('Thanks to Sid, Jacob and every beta tester', textAlign: TextAlign.center, style: _wide(32, weight: 500, width: 100)),
+                const SizedBox(height: 14),
+                Text(
+                  'Tested on Gen 1 (MoveOS 4 and 5), Gen 2 and Gen 3 (MoveOS 5)',
+                  textAlign: TextAlign.center,
+                  style: _wide(27, color: _muted, weight: 450, width: 100).copyWith(height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 70),
+          Opacity(
+            opacity: s.fadeIn(2.2),
+            child: Text('Follow @PracticalOverkill for more', textAlign: TextAlign.center, style: _wide(38, color: _accent, weight: 650, width: 104)),
+          ),
+          const SizedBox(height: 40),
+          Opacity(
+            opacity: s.fadeIn(2.2),
+            child: Text(
+              'Independent project. Not affiliated with Ola Electric.',
+              textAlign: TextAlign.center,
+              style: _wide(22, color: _muted.withValues(alpha: 0.75), weight: 400, width: 100),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
