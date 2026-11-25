@@ -1,5 +1,5 @@
 const appName = 'OpenDash';
-const appVersion = '0.3.2';
+const appVersion = '0.3.3';
 const repoUrl = 'github.com/abhijithvijayan/opendash';
 
 /// Where OpenDash's own releases are published (`owner/repo` on GitHub).
