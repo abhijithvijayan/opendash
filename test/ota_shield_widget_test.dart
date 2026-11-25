@@ -9,6 +9,8 @@ import 'package:opendash/services/analytics_logger.dart';
 import 'package:opendash/services/mock_platform_service.dart';
 import 'package:opendash/services/platform_provider.dart';
 import 'package:opendash/state/apps_state.dart';
+import 'package:opendash/state/firmware_state.dart';
+import 'package:opendash/state/ota_shield_state.dart';
 import 'package:opendash/state/passcode_gate.dart';
 import 'package:opendash/state/ota_state.dart';
 import 'package:opendash/state/settings_state.dart';
@@ -190,6 +192,71 @@ void main() {
     passcode();
     await settle(tester);
     expect(platform.otaShieldCalls, ['disableFailsafe']);
+  });
+
+  group('the bell', () {
+    const failsafe = OtaShieldReport(running: false, service: OtaShieldService(activated: true, failsafe: true, step: 'IDLE'));
+    const idle = OtaShieldReport(running: false, service: OtaShieldService(activated: false, failsafe: false, step: 'IDLE'));
+
+    Future<void> wait(WidgetTester tester, Duration d) async {
+      await tester.pump(d);
+      await settle(tester);
+    }
+
+    testWidgets('lights for a block the rider switched on that is not up, after the power-on grace, until seen', (tester) async {
+      await pumpApp(tester, installed: true, report: failsafe);
+      expect(container.read(bellProvider), isFalse, reason: 'OTA Shield may still be starting its block');
+      await wait(tester, OtaShieldAlertNotifier.grace);
+      expect(container.read(otaShieldAlertProvider).problem, 'failsafe');
+      expect(container.read(bellProvider), isTrue);
+      expect(platform.otaShieldStatusCalls.last, isFalse, reason: 'the background look spares the service while the port answers');
+
+      await openUpdates(tester);
+      expect(container.read(bellProvider), isFalse, reason: 'seen on the Updates screen');
+      expect(AnalyticsLogger.instance.recent('ota_shield', 'alert').last['data'], containsPair('problem', 'failsafe'));
+    });
+
+    testWidgets('a block that comes back clears it, and the next problem lights it again', (tester) async {
+      await pumpApp(tester, installed: true, report: failsafe);
+      await wait(tester, OtaShieldAlertNotifier.grace);
+      expect(container.read(bellProvider), isTrue);
+      platform.otaShield = const OtaShieldReport(running: true, blocked: 0, offerCount: 0,
+          service: OtaShieldService(activated: true, failsafe: false, step: 'ACTIVATED'));
+      await wait(tester, OtaShieldAlertNotifier.every);
+      expect(container.read(bellProvider), isFalse);
+      platform.otaShield = const OtaShieldReport(running: false, service: OtaShieldService(activated: false, failsafe: false, step: 'ACTIVATED'));
+      await wait(tester, OtaShieldAlertNotifier.every);
+      expect(container.read(otaShieldAlertProvider).problem, 'stopped');
+      expect(container.read(bellProvider), isTrue);
+    });
+
+    testWidgets('stays dark when the rider never activated it or turned it off, and for an OTA Shield without its service', (tester) async {
+      await pumpApp(tester, installed: true, report: idle);
+      await wait(tester, OtaShieldAlertNotifier.grace);
+      expect(container.read(bellProvider), isFalse);
+      platform.otaShield = OtaShieldReport.notRunning;
+      await wait(tester, OtaShieldAlertNotifier.every);
+      expect(container.read(bellProvider), isFalse);
+    });
+
+    testWidgets('not installed: never asked', (tester) async {
+      await pumpApp(tester);
+      await wait(tester, OtaShieldAlertNotifier.grace + OtaShieldAlertNotifier.every);
+      expect(platform.otaShieldStatusCalls, isEmpty);
+      expect(container.read(bellProvider), isFalse);
+    });
+  });
+
+  test('a problem is only one the rider would want to hear about', () {
+    OtaShieldReport r({bool running = false, bool failsafe = false, String step = 'IDLE'}) =>
+        OtaShieldReport(running: running, service: OtaShieldService(activated: false, failsafe: failsafe, step: step));
+    expect(r().problem, isNull, reason: 'never activated, or turned off');
+    expect(r(step: 'FAILED').problem, 'failed');
+    expect(r(step: 'ACTIVATED').problem, 'stopped');
+    expect(r(running: true, step: 'ACTIVATED').problem, isNull);
+    expect(r(failsafe: true).problem, 'failsafe');
+    expect(r(step: 'STARTING_DAEMON').problem, isNull, reason: 'still activating');
+    expect(OtaShieldReport.notRunning.problem, isNull, reason: 'no service: intent unknown');
   });
 
   test('a report drops what it does not know and treats no answer as not running', () {

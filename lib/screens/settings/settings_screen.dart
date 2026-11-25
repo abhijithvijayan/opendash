@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../state/apps_state.dart';
 import '../../state/crash_recovery.dart';
 import '../../state/firmware_state.dart';
+import '../../state/ota_shield_state.dart';
 import '../../state/ota_state.dart';
 import '../../state/recovery_panel.dart';
 import '../../state/riding_settings.dart';
@@ -64,6 +65,7 @@ class _Body extends ConsumerWidget {
     final riding = ref.read(ridingSettingsProvider.notifier);
     final updateAvailable = ref.watch(otaProvider.select((o) => o.bell));
     final firmwareNews = ref.watch(firmwareProvider.select((f) => f.bell));
+    final shieldAlert = ref.watch(otaShieldAlertProvider.select((a) => a.bell));
 
     return ColoredBox(
       key: const ValueKey('settings-body'),
@@ -107,7 +109,7 @@ class _Body extends ConsumerWidget {
                     label: 'Updates',
                     icon: Icons.system_update_alt_rounded,
                     active: false,
-                    badge: updateAvailable || firmwareNews,
+                    badge: updateAvailable || firmwareNews || shieldAlert,
                     onTap: () {
                       uiTap('settings-nav', {'section': 'updates'});
                       ref.read(otaScreenOpenProvider.notifier).open();

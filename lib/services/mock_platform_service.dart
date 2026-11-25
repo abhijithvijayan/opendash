@@ -246,7 +246,13 @@ class MockPlatformService implements PlatformService {
   OtaShieldReport otaShield = OtaShieldReport.notRunning;
 
   @override
-  Future<OtaShieldReport> otaShieldStatus() async => otaShield;
+  Future<OtaShieldReport> otaShieldStatus({bool serviceWhenRunning = true}) async {
+    otaShieldStatusCalls.add(serviceWhenRunning);
+    return otaShield;
+  }
+
+  /// Each status read, by whether the service was asked while running.
+  final List<bool> otaShieldStatusCalls = [];
 
   /// Calls OpenDash made to OTA Shield's service, in order.
   final List<String> otaShieldCalls = [];

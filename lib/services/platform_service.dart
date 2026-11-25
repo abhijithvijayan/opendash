@@ -102,7 +102,9 @@ abstract class PlatformService {
 
   /// What OTA Shield's daemon says on its local control port (not running
   /// when nothing answers), and what its service says where it has one.
-  Future<OtaShieldReport> otaShieldStatus();
+  /// Without [serviceWhenRunning], the service is not asked while the port
+  /// answers: its fail-safe question runs a root command each time.
+  Future<OtaShieldReport> otaShieldStatus({bool serviceWhenRunning = true});
 
   /// Asks OTA Shield to activate its block; true when it was asked. Its
   /// progress comes back in [otaShieldStatus].

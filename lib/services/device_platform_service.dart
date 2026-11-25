@@ -145,8 +145,8 @@ class DevicePlatformService implements PlatformService {
   String? externalFilesDir() => _read('externalFilesDir', (r) => r.externalFilesDir(), null);
 
   @override
-  Future<OtaShieldReport> otaShieldStatus() async =>
-      OtaShieldReport.fromMap(await _invoke<Map<Object?, Object?>>('otaShieldStatus'));
+  Future<OtaShieldReport> otaShieldStatus({bool serviceWhenRunning = true}) async =>
+      OtaShieldReport.fromMap(await _invoke<Map<Object?, Object?>>('otaShieldStatus', serviceWhenRunning));
 
   @override
   Future<bool> otaShieldActivate() async => await _invoke<bool>('otaShieldActivate') ?? false;

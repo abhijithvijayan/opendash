@@ -183,7 +183,7 @@ class PlatformPlugin private constructor(
                 },
             )
             "networkCheck" -> networkCheck(result)
-            "otaShieldStatus" -> OtaShield.status(activity, result)
+            "otaShieldStatus" -> OtaShield.status(activity, result, call.arguments as? Boolean ?: true)
             "otaShieldActivate" -> OtaShield.activate(activity, result)
             "otaShieldDisableFailsafe" -> OtaShield.disableFailsafe(activity, result)
             "latestRelease" -> latestRelease(call.argument<String>("url")!!, call.argument<String>("asset").orEmpty(), result)

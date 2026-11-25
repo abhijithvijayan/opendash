@@ -11,6 +11,7 @@ import '../services/prefs_service.dart';
 import '../services/trusted_clock.dart';
 import 'crash_recovery.dart';
 import '../models/app_catalog.dart';
+import 'ota_shield_state.dart';
 import 'ota_state.dart';
 import 'passcode_gate.dart';
 import 'prompt_surface.dart';
@@ -264,13 +265,15 @@ class FirmwareState {
 
 final firmwareProvider = NotifierProvider<FirmwareNotifier, FirmwareState>(FirmwareNotifier.new);
 
-/// The status-bar bell: firmware news, or (mock build only) the simulated
+/// The status-bar bell: firmware news, an OTA Shield block the rider
+/// switched on that is not up, or (mock build only) the simulated
 /// OpenDash update. On the scooter the vehicle notifier ignores
 /// `setNotification`, so nothing simulated can light it.
 final bellProvider = Provider<bool>((ref) {
   final firmware = ref.watch(firmwareProvider.select((f) => f.bell));
   final own = ref.watch(otaProvider.select((o) => o.bell));
-  return firmware || own || ref.watch(vehicleProvider.select((v) => v.hasNotification));
+  final shield = ref.watch(otaShieldAlertProvider.select((a) => a.bell));
+  return firmware || own || shield || ref.watch(vehicleProvider.select((v) => v.hasNotification));
 });
 
 /// Scooter firmware control: the soft layer (the stock auto-download

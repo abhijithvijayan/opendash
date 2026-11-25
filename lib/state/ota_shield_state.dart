@@ -7,6 +7,7 @@ import '../models/ota_shield.dart';
 import '../services/analytics_logger.dart';
 import '../services/platform_provider.dart';
 import 'apps_state.dart';
+import 'ota_state.dart';
 import 'passcode_gate.dart';
 import 'toast_state.dart';
 
@@ -59,6 +60,7 @@ class OtaShieldNotifier extends Notifier<OtaShieldReport?> {
     final report = await ref.read(platformServiceProvider).otaShieldStatus();
     if (!ref.mounted) return;
     state = report;
+    ref.read(otaShieldAlertProvider.notifier).seenReport(report);
     final s = report.service;
     final key = (report.running, report.blocked, report.offerCount, s?.activated, s?.failsafe, s?.step, s?.activation, s?.activationStep);
     if (key != _logged) {
@@ -111,5 +113,75 @@ class OtaShieldNotifier extends Notifier<OtaShieldReport?> {
 
   void _toast(String text) {
     if (ref.mounted) ref.read(toastProvider.notifier).show(text, type: ToastType.warning);
+  }
+}
+
+class OtaShieldAlert {
+  const OtaShieldAlert({this.problem, this.seen});
+
+  /// [OtaShieldReport.problem] at the last look; null when there is none.
+  final String? problem;
+
+  /// The problem already shown on the Updates screen.
+  final String? seen;
+
+  /// The bell and the dot on the Updates row: a problem not yet seen. No
+  /// popup, toast or sound.
+  bool get bell => problem != null && problem != seen;
+}
+
+/// Watches OTA Shield in the background so that a block the rider switched
+/// on and that is not up lights the bell. A look every [every] from [grace]
+/// after start (OTA Shield takes a while to start its block at power-on),
+/// the port only while it answers; the Settings card's looks count too.
+final otaShieldAlertProvider = NotifierProvider<OtaShieldAlertNotifier, OtaShieldAlert>(OtaShieldAlertNotifier.new);
+
+class OtaShieldAlertNotifier extends Notifier<OtaShieldAlert> {
+  static const grace = Duration(minutes: 3);
+  static const every = Duration(minutes: 5);
+
+  Timer? _first;
+  Timer? _timer;
+
+  @override
+  OtaShieldAlert build() {
+    ref.onDispose(() {
+      _first?.cancel();
+      _timer?.cancel();
+    });
+    ref.listen(otaScreenOpenProvider, (_, open) {
+      if (open) _markSeen();
+    });
+    _first = Timer(grace, () {
+      unawaited(_look());
+      _timer = Timer.periodic(every, (_) => _look());
+    });
+    return const OtaShieldAlert();
+  }
+
+  Future<void> _look() async {
+    // Asked of Android, not the Apps screen's record, which is only filled
+    // once something has opened it.
+    final platform = ref.read(platformServiceProvider);
+    if (!platform.isInstalled(otaShieldPackage)) {
+      seenReport(null);
+      return;
+    }
+    final report = await platform.otaShieldStatus(serviceWhenRunning: false);
+    if (ref.mounted) seenReport(report);
+  }
+
+  /// A fresh report, from here or from the Settings card.
+  void seenReport(OtaShieldReport? report) {
+    final problem = report?.problem;
+    if (problem == state.problem) return;
+    logEvent('ota_shield', 'alert', {'problem': problem});
+    state = problem == null
+        ? const OtaShieldAlert()
+        : OtaShieldAlert(problem: problem, seen: ref.read(otaScreenOpenProvider) ? problem : state.seen);
+  }
+
+  void _markSeen() {
+    if (state.bell) state = OtaShieldAlert(problem: state.problem, seen: state.problem);
   }
 }

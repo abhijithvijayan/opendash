@@ -116,6 +116,22 @@ class OtaShieldReport {
   /// Nothing Ola sends can reach the scooter: blocking, or cut off.
   bool get keepsUpdatesOut => running || failsafe;
 
+  /// Why the rider should look, only for a block they switched on: its
+  /// fail-safe cut the scooter off ("failsafe"), its activation failed at
+  /// power-on or in OTA Shield ("failed"), or it was activated and its
+  /// blocker is gone ("stopped"). Never activated, or turned off by the
+  /// rider, reads IDLE and is not a problem; nor is an OTA Shield whose
+  /// service OpenDash does not use.
+  String? get problem {
+    final s = service;
+    if (s == null) return null;
+    if (s.failsafe) return 'failsafe';
+    if (running) return null;
+    if (s.step == 'FAILED') return 'failed';
+    if (s.step == 'ACTIVATED') return 'stopped';
+    return null;
+  }
+
   static const notRunning = OtaShieldReport(running: false);
 
   static OtaShieldReport fromMap(Map<Object?, Object?>? m) {

@@ -99,7 +99,9 @@ object OtaShield {
         if (activation?.get("phase") == "running") activation = mapOf("phase" to "failed", "error" to "OTA Shield stopped")
     }
 
-    fun status(activity: Activity, result: MethodChannel.Result) {
+    /// [serviceWhenRunning] false skips the service while the port answers:
+    /// its fail-safe question runs a root command in OTA Shield each time.
+    fun status(activity: Activity, result: MethodChannel.Result, serviceWhenRunning: Boolean = true) {
         val context = activity.applicationContext
         Thread {
             val found = try {
@@ -108,7 +110,7 @@ object OtaShield {
                 mapOf("running" to false)
             }
             val fromService = try {
-                readService(context)
+                if (!serviceWhenRunning && found["running"] == true) null else readService(context)
             } catch (e: Exception) {
                 null
             }
