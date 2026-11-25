@@ -99,12 +99,39 @@ void main() {
       expect(read('Verifies\nWARNING: something'), isEmpty);
     });
 
-    test('deploy.sh and release.sh use the same, rising build number', () {
-      const rule = r'--build-number="$(( $(git rev-list --count HEAD) + 2000 ))"';
-      expect(File('scripts/deploy.sh').readAsStringSync(), contains(rule));
+    test('deploy.sh and release.sh take the build number from the version, never the history', () {
+      final deploy = File('scripts/deploy.sh').readAsStringSync();
       final release = File('scripts/release.sh').readAsStringSync();
-      expect(release, contains(r'BUILD="$(( $(git rev-list --count HEAD) + 2000 ))"'));
+      expect(deploy, contains(r'BUILD="$(scripts/build-number.sh "$VERSION" dev)"'));
+      expect(deploy, contains(r'--build-number="$BUILD"'));
+      expect(release, contains(r'BUILD="$(scripts/build-number.sh "$VERSION" "${TRIAL:+trial}")"'));
       expect(release, contains(r'--build-number="$BUILD"'));
+      for (final script in [deploy, release]) {
+        expect(script, isNot(contains('rev-list')));
+      }
+    });
+
+    // Android, the self-update and the companion app all call a higher
+    // build newer; 2001 is the highest build made before 0.3.0.
+    test('build numbers rise with the version and stay above every earlier build', () {
+      int build(String version, [String kind = 'release']) {
+        final r = Process.runSync('scripts/build-number.sh', [version, kind]);
+        expect(r.exitCode, 0, reason: '$version $kind: ${r.stderr}');
+        return int.parse((r.stdout as String).trim());
+      }
+
+      expect(build('0.3.0'), 30000);
+      expect(build('0.3.0'), greaterThan(2001));
+      final order = ['0.2.9', '0.3.0-alpha.1', '0.3.0-alpha.2', '0.3.0-beta.1', '0.3.0-beta.9', '0.3.0', '0.3.1', '0.4.0', '1.0.0'];
+      for (var i = 1; i < order.length; i++) {
+        expect(build(order[i]), greaterThan(build(order[i - 1])), reason: '${order[i]} after ${order[i - 1]}');
+      }
+      expect(build('0.3.0', 'dev'), allOf(greaterThan(build('0.3.0')), lessThan(build('0.3.1-alpha.1'))));
+      expect(build('0.3.0-beta.2', 'dev'), lessThan(build('0.3.0')));
+      expect(build('0.3.0', 'trial'), build('0.3.0') + 1);
+      for (final bad in ['0.3', 'v0.3.0', '0.100.0', '0.3.0-beta.0', '0.3.0-rc.1']) {
+        expect(Process.runSync('scripts/build-number.sh', [bad]).exitCode, isNot(0), reason: bad);
+      }
     });
   });
 

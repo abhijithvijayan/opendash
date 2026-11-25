@@ -22,8 +22,8 @@
 #   opendash-<version>.apk
 #   opendash-release.json   {version, build, apk, sha256, git_sha, min_build}
 #
-# The build number is the commit count plus 2000, as in scripts/deploy.sh,
-# so it only goes up. MIN_BUILD (default 0) says "only install over build N or later".
+# The build number comes from the version (scripts/build-number.sh), never
+# from the git history, so a restarted history cannot lower it. MIN_BUILD (default 0) says "only install over build N or later".
 #
 # Run by hand, or by .github/workflows/release.yml, which is the same script
 # with the key supplied from the repository's secrets.
@@ -34,7 +34,7 @@ VERSION="${1:-}"
 
 # --crash-trial=kotlin|dart: a build that FAILS AT START, on purpose, for the
 # maintainer's one trial of the "update that does not start" fallback.
-# It is named so, gets the next build number so that the
+# It is named so, gets the build number after the release so that the
 # app offers it, and must only ever be published for that trial and deleted
 # after. The GitHub workflow never passes this.
 TRIAL=""
@@ -72,13 +72,12 @@ if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   exit 1
 fi
 
-BUILD="$(( $(git rev-list --count HEAD) + 2000 ))"
+BUILD="$(scripts/build-number.sh "$VERSION" "${TRIAL:+trial}")"
 GIT_SHA="$(git rev-parse --short HEAD)"
 MIN_BUILD="${MIN_BUILD:-0}"
 APK="opendash-$VERSION.apk"
 TRIAL_ARGS=()
 if [[ -n "$TRIAL" ]]; then
-  BUILD=$((BUILD + 1))
   APK="opendash-$VERSION-CRASH-TRIAL.apk"
   [[ "$TRIAL" == kotlin ]] && TRIAL_ARGS=(--android-project-arg opendash.crash=kotlin)
   [[ "$TRIAL" == dart ]] && TRIAL_ARGS=(--dart-define=OPENDASH_CRASH=dart)

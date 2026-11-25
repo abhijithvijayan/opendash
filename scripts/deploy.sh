@@ -18,11 +18,12 @@ cd "$(dirname "$0")/.."
 echo "=== Building release APK ==="
 # The SHA lands in every log's app.start event, so a pulled log names its build.
 GIT_SHA="$(git rev-parse --short HEAD)$(git diff --quiet HEAD -- lib android || echo -dirty)"
-# The build number is the commit count plus 2000, so it only goes up and a
-# flashed build is never lower than a release (Android refuses to install a
-# lower one over a higher one). The 2000 keeps it above every build made
-# before the history was last restarted (the highest was 0.2.0, build 1001).
-flutter build apk --release --build-number="$(( $(git rev-list --count HEAD) + 2000 ))" --dart-define=GIT_SHA="$GIT_SHA"
+# The build number comes from pubspec.yaml's version (scripts/build-number.sh):
+# a flashed build is above the release of its version, so it installs over
+# it (Android refuses a lower one over a higher one) and is not offered it.
+VERSION="$(sed -n 's/^version: *\([0-9A-Za-z.-]*\).*/\1/p' pubspec.yaml | head -1)"
+BUILD="$(scripts/build-number.sh "$VERSION" dev)"
+flutter build apk --release --build-number="$BUILD" --dart-define=GIT_SHA="$GIT_SHA"
 
 echo "=== Connecting ADB ==="
 adb connect "$DEV"
