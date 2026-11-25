@@ -83,6 +83,7 @@ class UsagePing extends Notifier<bool> {
       isNew: !counted,
       v: ref.read(vehicleProvider),
       software: ref.read(scooterCapabilitiesProvider).software,
+      android: ref.read(platformServiceProvider).deviceInfo()['release'] ?? '',
     ));
     _sending = true;
     final status = await ref.read(platformServiceProvider).usagePing(usagePingUrl, body);
@@ -108,6 +109,7 @@ Map<String, Object?> usagePayload({
   required bool isNew,
   required VehicleData v,
   StockIdentity? software,
+  required String android,
 }) {
   final known = v.hhmisBacked;
   return {
@@ -120,6 +122,7 @@ Map<String, Object?> usagePayload({
     'model': !known || v.vehicleType == null ? '' : ScooterModel.nameFor(v.vehicleType) ?? 'type ${v.vehicleType}',
     'moveos': known ? v.moveOsVersion : '',
     'stock': software?.version ?? '',
+    'android': android,
   };
 }
 

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS pings (
   model    TEXT    NOT NULL,          -- scooter model, '' unknown
   moveos   TEXT    NOT NULL,          -- MoveOS version, '' unknown
   stock    TEXT    NOT NULL,          -- stock vehicle service version, '' unknown
+  android  TEXT    NOT NULL DEFAULT '', -- head unit's Android release, '' unknown
   country  TEXT    NOT NULL,          -- two letters from Cloudflare, '' unknown
   at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
   proof    TEXT                       -- SHA-256 of the ping's proof of work, taken once

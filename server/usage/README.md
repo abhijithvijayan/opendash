@@ -3,8 +3,8 @@
 The Cloudflare Worker behind OpenDash's anonymous usage counts. It stores
 each weekly ping as one row in a D1 database: the ISO week, whether it is
 the first ping after an install, the OpenDash version and build, the
-scooter's generation, model, MoveOS and stock service versions, and the
-country Cloudflare saw the request from. No identifier and no IP address
+scooter's generation, model, MoveOS and stock service versions, the head
+unit's Android version, and the country Cloudflare saw the request from. No identifier and no IP address
 is stored.
 
 ## Fakes
@@ -36,6 +36,8 @@ cd server/usage
 npx wrangler login
 npx wrangler d1 create opendash-usage        # put the id in wrangler.toml
 npx wrangler d1 execute opendash-usage --remote --file schema.sql
+# An existing database made before the Android column:
+#   npx wrangler d1 execute opendash-usage --remote --file migrations-0002-android.sql
 npx wrangler secret put STATS_TOKEN          # any long random string
 npx wrangler deploy
 ```

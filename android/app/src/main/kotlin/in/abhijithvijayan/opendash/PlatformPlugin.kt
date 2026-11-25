@@ -217,7 +217,7 @@ class PlatformPlugin private constructor(
     // never set at the firmware build date (ro.build.date.utc), so "wall -
     // build time <= uptime" is how Dart's TrustedClock tells a default
     // clock from a real one on any firmware.
-    override fun deviceInfo(): Map<String, String> = mapOf(
+    override fun deviceInfo(): Map<String, String> = ScreenFacts.of(activity) + mapOf(
                 "model" to Build.MODEL,
                 "release" to Build.VERSION.RELEASE,
                 // Most preferred first: what an app with a build per

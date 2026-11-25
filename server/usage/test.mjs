@@ -6,7 +6,7 @@ import { check, isoWeek, leadingZeroBits } from './src/index.js';
 
 const NOW = Date.UTC(2026, 10, 25, 9);
 const payload = (o = {}) =>
-  JSON.stringify({ v: 2, week: '2026-W48', new: true, app: '0.2.0', build: 1612, gen: '1', model: 'S1 Pro', moveos: '4.6.14', stock: '4.6.14', ...o });
+  JSON.stringify({ v: 2, week: '2026-W48', new: true, app: '0.2.0', build: 1612, gen: '1', model: 'S1 Pro', moveos: '4.6.14', stock: '4.6.14', android: '10', ...o });
 
 function solve(ping, bits) {
   for (let n = 0; ; n++) {
@@ -38,4 +38,13 @@ test('too little work, another week, an old version or a changed ping is refused
   assert.equal(await check(JSON.stringify({ ping: future, n: solve(future, 22) }), NOW), null);
   const v1 = payload({ v: 1 });
   assert.equal(await check(JSON.stringify({ ping: v1, n: solve(v1, 22) }), NOW), null);
+});
+
+test('the Android version is kept, and an app too old to send it still counts', async () => {
+  const ping = payload();
+  assert.equal((await check(JSON.stringify({ ping, n: solve(ping, 22) }), NOW)).android, '10');
+  const old = payload({ android: undefined });
+  assert.equal((await check(JSON.stringify({ ping: old, n: solve(old, 22) }), NOW)).android, '');
+  const odd = payload({ android: '10; DROP TABLE' });
+  assert.equal(await check(JSON.stringify({ ping: odd, n: solve(odd, 22) }), NOW), null);
 });

@@ -204,6 +204,10 @@ Future<void> _startAnalytics() async {
       key: device[key],
     'firmware_built_ms': int.tryParse(device['build_time_ms'] ?? ''),
     'ram_mb': int.tryParse(device['ram_mb'] ?? ''),
+    // The install sets density 160, chosen on Gen 1's 1280x768 screen.
+    'screen_px': device['screen_px'],
+    'density': int.tryParse(device['density'] ?? ''),
+    'density_default': int.tryParse(device['density_default'] ?? ''),
     'stock_packages': (device['stock_packages'] ?? '').split(';').where((p) => p.isNotEmpty).toList(),
     'props': (device['system_props'] ?? '').split('\n').where((p) => p.isNotEmpty).toList(),
     'sensors': (device['sensors'] ?? '').split('\n').where((p) => p.isNotEmpty).toList(),

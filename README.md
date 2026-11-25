@@ -234,7 +234,7 @@ The log is written so that it can be shared: identifiers such as the VIN, serial
 - **Anonymous install count.** So we know how many scooters run OpenDash and which versions are still in use, OpenDash sends one small message at most once a week to a server of ours ([`server/usage`](server/usage)). This is the whole message:
 
   ```json
-  {"v":2,"week":"2026-W48","new":false,"app":"0.2.1","build":2001,"gen":"1","model":"S1 Pro","moveos":"4.6.14","stock":"4.6.14"}
+  {"v":2,"week":"2026-W48","new":false,"app":"0.2.1","build":2001,"gen":"1","model":"S1 Pro","moveos":"4.6.14","stock":"4.6.14","android":"10"}
   ```
 
   `new` is true only on the first message after an install. The app also attaches a few seconds' worth of proof of work to each message, so that faking many messages costs real computing time. There is no ID of any kind, so two messages cannot be told to come from the same scooter. The server keeps the country the message came from and does not keep your IP address. Turn it off in **Settings → Updates → Count this install**; once off, nothing is sent.

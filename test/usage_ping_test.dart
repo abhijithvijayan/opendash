@@ -34,8 +34,10 @@ void main() {
         isNew: true,
         v: const VehicleData(hhmisBacked: true, vehicleType: 3, moveOsVersion: '4.6.14'),
         software: const StockIdentity(version: '4.6.14', source: StockIdentity.sourceRead, name: 'gen1-moveos4-hhmis-4.6.14'),
+        android: '10',
       );
-      expect(p.keys.toSet(), {'v', 'week', 'new', 'app', 'build', 'gen', 'model', 'moveos', 'stock'});
+      expect(p.keys.toSet(), {'v', 'week', 'new', 'app', 'build', 'gen', 'model', 'moveos', 'stock', 'android'});
+      expect(p, containsPair('android', '10'));
       expect(p, containsPair('gen', '1'));
       expect(p, containsPair('model', 'S1 Pro'));
       expect(p, containsPair('build', 1612));
@@ -43,7 +45,7 @@ void main() {
     });
 
     test('nothing about the scooter before the stock service has spoken', () {
-      final p = usagePayload(week: '2026-W48', isNew: false, v: const VehicleData(vehicleType: 3));
+      final p = usagePayload(week: '2026-W48', isNew: false, v: const VehicleData(vehicleType: 3), android: '10');
       expect([p['gen'], p['model'], p['moveos'], p['stock']], ['', '', '', '']);
     });
   });
@@ -80,6 +82,12 @@ void main() {
     }
 
     List<Map<String, Object?>> sent() => [for (final b in platform.usagePings) jsonDecode(b) as Map<String, Object?>];
+
+    test('carries the head unit\'s Android version', () async {
+      await ping().sendIfDue();
+      expect(sent().single['android'], platform.deviceInfo()['release']);
+      expect(sent().single['android'], isNotEmpty);
+    });
 
     test('once a week; the first one marks the install', () async {
       await ping().sendIfDue();
