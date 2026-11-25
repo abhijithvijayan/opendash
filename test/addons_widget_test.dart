@@ -76,7 +76,9 @@ void main() {
     expect(find.text('Terminal'), findsOneWidget);
     expect(find.text('Coming soon'), findsNothing);
     expect(find.text('Screen Mirror'), findsNothing);
-    expect(find.text('Not installed'), findsNWidgets(8));
+    // OTA Shield is not offered while it is not installed.
+    expect(find.text('OTA Shield'), findsNothing);
+    expect(find.text('Not installed'), findsNWidgets(7));
     for (final name in ['Browser', 'Maps', 'NewPipe', 'File Manager']) {
       expect(find.text(name), findsOneWidget);
     }

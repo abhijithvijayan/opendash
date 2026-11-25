@@ -80,9 +80,9 @@ void main() {
     container.read(vehicleProvider.notifier).setWifi(false);
     await settle(tester);
     expect(hint(), startsWith('Not on Wi-Fi.'));
-    await tester.tap(k('app-ota-shield'));
+    await tester.tap(k('app-browser'));
     await settle(tester);
-    expect(find.textContaining('downloaded from Codeberg'), findsOneWidget);
+    expect(find.textContaining('downloaded from GitHub'), findsOneWidget);
     expect(find.textContaining('You are not on Wi-Fi'), findsOneWidget);
   });
 

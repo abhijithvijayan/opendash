@@ -36,7 +36,16 @@ class CatalogApp {
     this.appName = '',
     this.abiAssets = const {},
     this.shortName = '',
+    this.hiddenUnlessInstalled = false,
   });
+
+  /// Not offered: left off Apps (and, for OTA Shield, Settings → Updates)
+  /// unless it is already on the head unit or on its way, so a rider who
+  /// has it keeps it.
+  final bool hiddenUnlessInstalled;
+
+  bool shownWith(AppStatus? status) =>
+      !hiddenUnlessInstalled || (status != null && status != AppStatus.notInstalled);
 
   /// For a button no wider than the boot button, where the full name was
   /// shrunk to fit: "Android Settings" came out about 11 px high on the
@@ -233,6 +242,9 @@ const appCatalog = [
     signer: '4244c54f0d5e847d72d9dbbf0db00252040e1cb60806cc7a1f5cccf74fe05adb',
     license: 'GPL-3.0',
     passcode: true,
+    // Its block does not hold well yet (2026-11-25): not offered to new
+    // riders until it does. Remove to offer it again.
+    hiddenUnlessInstalled: true,
   ),
   CatalogApp(
     id: CatalogApp.androidSettingsId,

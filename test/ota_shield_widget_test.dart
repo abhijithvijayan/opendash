@@ -12,7 +12,6 @@ import 'package:opendash/state/apps_state.dart';
 import 'package:opendash/state/firmware_state.dart';
 import 'package:opendash/state/ota_shield_state.dart';
 import 'package:opendash/state/passcode_gate.dart';
-import 'package:opendash/state/ota_state.dart';
 import 'package:opendash/state/settings_state.dart';
 
 /// OTA Shield on Settings → Updates and on its Apps tile, against the mock
@@ -58,16 +57,20 @@ void main() {
 
   String status(WidgetTester tester) => tester.widget<Text>(k('shield-status')).data!;
 
-  testWidgets('not installed: the card says so and takes the rider to Apps', (tester) async {
+  testWidgets('not installed: hidden on Updates and Apps while it is not offered', (tester) async {
     await pumpApp(tester);
-    await openUpdates(tester);
-    expect(status(tester), 'Not installed');
-    expect(k('shield-blocked'), findsNothing);
-    await tester.tap(k('shield-get'));
+    container.read(settingsScreenOpenProvider.notifier).open();
     await settle(tester);
-    expect(container.read(appLauncherOpenProvider), isTrue);
-    expect(container.read(otaScreenOpenProvider), isFalse);
-    expect(k('app-${CatalogApp.otaShieldId}'), findsOneWidget);
+    await tester.ensureVisible(k('section-updates'));
+    await tester.tap(k('section-updates'));
+    await settle(tester);
+    expect(k('shield-card'), findsNothing);
+    expect(k('fw-card'), findsOneWidget);
+
+    container.read(appLauncherOpenProvider.notifier).open();
+    await settle(tester);
+    expect(k('app-${CatalogApp.otaShieldId}'), findsNothing);
+    expect(k('app-browser'), findsOneWidget);
   });
 
   testWidgets('installed with its blocker stopped: not blocking, on the card and the tile', (tester) async {

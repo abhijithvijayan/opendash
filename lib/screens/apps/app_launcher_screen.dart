@@ -145,7 +145,7 @@ class _BodyState extends ConsumerState<_Body> {
                 spacing: 24,
                 runSpacing: 24,
                 children: [
-                  for (final app in appCatalog)
+                  for (final app in appCatalog.where((a) => a.shownWith(statuses[a.id])))
                     _AppCard(
                       key: ValueKey('app-${app.id}'),
                       app: app,

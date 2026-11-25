@@ -15,6 +15,12 @@ import 'toast_state.dart';
 final otaShieldInstalledProvider =
     Provider<bool>((ref) => ref.watch(appManagerProvider.select((m) => m[CatalogApp.otaShieldId]?.present ?? false)));
 
+/// Whether OTA Shield is shown at all, on Apps and Settings → Updates
+/// ([CatalogApp.hiddenUnlessInstalled]).
+final otaShieldShownProvider = Provider<bool>((ref) => appCatalog
+    .firstWhere((a) => a.id == CatalogApp.otaShieldId)
+    .shownWith(ref.watch(appManagerProvider.select((m) => m[CatalogApp.otaShieldId]))));
+
 /// What OTA Shield's daemon reports, asked while a screen that shows it is
 /// open (Settings → Updates, the Apps screen) and not otherwise. Null until
 /// the first answer, and while OTA Shield is not installed.

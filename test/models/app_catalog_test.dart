@@ -49,6 +49,16 @@ void main() {
       expect(appCatalog.firstWhere((a) => a.id == CatalogApp.otaShieldId).passcode, isTrue);
     });
 
+    test('OTA Shield is offered to nobody new, but stays for a rider who has it', () {
+      final shield = appCatalog.firstWhere((a) => a.id == CatalogApp.otaShieldId);
+      expect(shield.shownWith(null), isFalse);
+      expect(shield.shownWith(AppStatus.notInstalled), isFalse);
+      for (final s in AppStatus.values.where((s) => s != AppStatus.notInstalled)) {
+        expect(shield.shownWith(s), isTrue, reason: s.name);
+      }
+      expect(appCatalog.where((a) => a.hiddenUnlessInstalled).map((a) => a.id), [CatalogApp.otaShieldId]);
+    });
+
     test('the rider is told where an app comes from', () {
       expect(appCatalog.firstWhere((a) => a.id == CatalogApp.otaShieldId).source, 'Codeberg');
       expect(appCatalog.firstWhere((a) => a.id == 'terminal').source, 'GitHub');

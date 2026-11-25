@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/build_info.dart';
 import '../../providers/mock_provider.dart';
 import '../../state/firmware_state.dart';
+import '../../state/ota_shield_state.dart';
 import '../../state/ota_state.dart';
 import '../../state/qr_card.dart';
 import '../../state/usage_ping.dart';
@@ -48,6 +49,7 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ackOpen = ref.watch(firmwareProvider.select((f) => f.ackOpen));
+    final shield = ref.watch(otaShieldShownProvider);
     return ColoredBox(
       key: const ValueKey('ota-body'),
       color: DashColors.ink,
@@ -62,14 +64,13 @@ class _Body extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: DashSpace.bodyBottom),
               child: ackOpen
                   ? const FirmwareAckPage()
-                  : const Column(
+                  : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _OpenDashCard(),
-                        SizedBox(height: 16),
-                        OtaShieldCard(),
-                        SizedBox(height: 16),
-                        FirmwareCard(),
+                        const _OpenDashCard(),
+                        const SizedBox(height: 16),
+                        if (shield) ...const [OtaShieldCard(), SizedBox(height: 16)],
+                        const FirmwareCard(),
                       ],
                     ),
             ),
