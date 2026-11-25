@@ -1056,6 +1056,14 @@ class AidlVehicleNotifier extends VehicleNotifier {
         (next.vehicleState == VehicleState.parked || next.speed <= 1)) {
       next = next.copyWith(touchDisabled: false);
     }
+    if (next.scooterAsleep) {
+      final liveState = echo ? null : delta['INT_VEHICLE_STATE'];
+      final awake = rawHeadUnitPower == true ? 'power_flag' : !next.locked ? 'unlocked' : liveState is int && liveState != HhmisCmd.vehicleStateLock ? 'state' : null;
+      if (awake != null) {
+        next = next.copyWith(scooterAsleep: false);
+        logEvent('safety', 'scooter_asleep', {'on': false, 'by': awake});
+      }
+    }
     for (final MapEntry(:key, :value) in delta.entries) {
       if (key is! String || !key.startsWith(_hwInfoPrefix) || value is! String || value.isEmpty) continue;
       final id = int.tryParse(key.substring(_hwInfoPrefix.length));
@@ -2065,6 +2073,12 @@ class AidlVehicleNotifier extends VehicleNotifier {
     _resumed = false;
     _silentLogged = false;
     logEvent('hhmis', 'lifecycle_pause', {'was_connected': _connectedAtMicros != null});
+    // The display going off while locked with the power flag down is the
+    // VCU cutting the head unit: when it is woken again the scooter is asleep.
+    if (state.locked && !state.scooterAsleep && _lastRaw['BOOL_HEAD_UNIT_POWER_FLAG'] == false) {
+      state = state.copyWith(scooterAsleep: true);
+      logEvent('safety', 'scooter_asleep', {'on': true});
+    }
     _stalenessTimer?.cancel();
     _stalenessTimer = null;
     ref.read(promptSurfaceVisibleProvider.notifier).screenShown(false);

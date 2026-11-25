@@ -6,6 +6,7 @@ import '../providers/mock_provider.dart';
 import '../services/analytics_logger.dart';
 import '../services/prefs_service.dart';
 import '../services/trusted_clock.dart';
+import 'toast_state.dart';
 
 enum PasscodeResult { success, failure, lockedOut }
 
@@ -91,8 +92,14 @@ class PasscodeNotifier extends Notifier<PasscodeState> {
   /// first failed try (`UserRepository.getRemainingAttemptsSharedPref`).
   static const lockoutDuration = Duration(minutes: 5);
   static const clearDelay = Duration(milliseconds: 500);
+  /// A right PIN unlocks within half a second. HHMIS also answers success
+  /// when the VCU is asleep and never unlocks (about 3 s later, 2026-11-21
+  /// and 2026-11-25): without this the pad stayed green and dead until a
+  /// restart, even after the scooter woke.
+  static const unlockWait = Duration(seconds: 5);
 
   Timer? _clearTimer;
+  Timer? _unlockTimer;
   Timer? _lockoutTimer;
 
   @override
@@ -100,8 +107,10 @@ class PasscodeNotifier extends Notifier<PasscodeState> {
     ref.onDispose(() {
       _clearTimer?.cancel();
       _lockoutTimer?.cancel();
+      _unlockTimer?.cancel();
     });
     ref.listen(vehicleProvider.select((v) => v.locked), (_, locked) {
+      _unlockTimer?.cancel();
       if (locked) {
         // Not the six that just unlocked it, which sit here until the next lock.
         if (state.enteredDigits.isNotEmpty && state.lastResult != PasscodeResult.success) {
@@ -120,6 +129,9 @@ class PasscodeNotifier extends Notifier<PasscodeState> {
     // The same on the raw screen-off edge: `touchDisabled` is cancelled at
     // once whenever the scooter is parked, which is always at the lock
     // screen, so the listener above never fired there.
+    ref.listen(vehicleProvider.select((v) => v.scooterAsleep), (_, asleep) {
+      if (asleep) clear('asleep');
+    });
     ref.listen(screenOffProvider, (_, _) {
       if (state.enteredDigits.isEmpty) return;
       clear('screen_off');
@@ -237,6 +249,8 @@ class PasscodeNotifier extends Notifier<PasscodeState> {
         attemptsRemaining: remaining,
         lastResult: () => PasscodeResult.success,
       );
+      _unlockTimer?.cancel();
+      if (ref.read(vehicleProvider).locked) _unlockTimer = Timer(unlockWait, _unlockNotFollowed);
       return;
     }
     state = state.copyWith(
@@ -254,6 +268,14 @@ class PasscodeNotifier extends Notifier<PasscodeState> {
         state = state.copyWith(enteredDigits: const [], lastResult: () => null);
       }
     });
+  }
+
+  void _unlockNotFollowed() {
+    _unlockTimer = null;
+    if (!ref.read(vehicleProvider).locked || state.lastResult != PasscodeResult.success) return;
+    logEvent('safety', 'unlock_not_followed', {'wait_s': unlockWait.inSeconds});
+    state = state.copyWith(enteredDigits: const [], lastResult: () => null);
+    ref.read(toastProvider.notifier).show("The scooter didn't unlock. Wake it and try again", type: ToastType.warning);
   }
 
   void _startLockout() {

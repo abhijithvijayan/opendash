@@ -878,9 +878,19 @@ class VehicleNotifier extends Notifier<VehicleData> {
 
   /// The bridge answers asynchronously through `onPassCodeVerify`; the mock
   /// answers in place, so callers accept either.
+  /// Dev panel: HHMIS answers a right PIN but the VCU stays in LOCK, as it
+  /// does when the scooter is asleep.
+  bool unlockIgnored = false;
+
+  void setAsleep(bool on) {
+    if (on) setLocked(true);
+    state = state.copyWith(scooterAsleep: on);
+  }
+
   FutureOr<(bool, int)> verifyPasscode(String pin) {
     if (pin == _passcode) {
       _passcodeAttempts = maxPasscodeAttempts;
+      if (unlockIgnored) return (true, maxPasscodeAttempts);
       setLocked(false);
       return (true, maxPasscodeAttempts);
     }
@@ -913,6 +923,7 @@ class VehicleNotifier extends Notifier<VehicleData> {
 
   void setLocked(bool locked) {
     state = state.copyWith(
+      scooterAsleep: locked ? null : false,
       lockState: locked ? 4 : 0,
       speed: locked ? 0 : null,
       vehicleState: locked ? VehicleState.parked : null,

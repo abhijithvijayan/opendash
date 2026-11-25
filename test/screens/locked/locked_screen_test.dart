@@ -58,6 +58,26 @@ void main() {
           ),
       ]);
 
+  // A display woken while the scooter sleeps: stock shows nothing to press.
+  testWidgets('asleep: black, no keypad, a touch shows how to get out', (tester) async {
+    await pumpLocked(tester);
+    v().put((d) => d.copyWith(scooterAsleep: true));
+    await settle(tester);
+    expect(k('lock-asleep'), findsOneWidget);
+    expect(k('lock-soc'), findsNothing);
+    final hint = find.text('The scooter is asleep');
+    double opacity() => tester.widget<AnimatedOpacity>(find.ancestor(of: hint, matching: find.byType(AnimatedOpacity))).opacity;
+    expect(opacity(), 0);
+    await tester.tap(k('lock-asleep'));
+    await settle(tester);
+    expect(opacity(), greaterThan(0));
+    await tester.pump(AsleepLockView.hintFor);
+    expect(opacity(), 0);
+    v().put((d) => d.copyWith(scooterAsleep: false));
+    await settle(tester);
+    expect(k('lock-soc'), findsOneWidget);
+  });
+
   group('lock-screen range', () {
     testWidgets('setting off: stock range, "km range"', (tester) async {
       await pumpLocked(tester);

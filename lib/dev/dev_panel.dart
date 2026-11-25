@@ -353,6 +353,12 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
                 _StateChip(label: 'Disconnect charger', active: false, onTap: () => n.setCharging(false)),
                 _StateChip(label: 'Fail lock', active: false, onTap: n.failLock),
                 _StateChip(label: 'Fail unlock', active: false, onTap: n.failUnlock),
+                _StateChip(label: 'Scooter asleep', active: v.scooterAsleep, onTap: () => n.setAsleep(!v.scooterAsleep)),
+                _StateChip(
+                  label: 'Unlock ignored',
+                  active: n.unlockIgnored,
+                  onTap: () => setState(() => n.unlockIgnored = !n.unlockIgnored),
+                ),
                 _StateChip(label: 'Wi-Fi scan', active: false, onTap: ref.read(wifiProvider.notifier).scan),
                 _StateChip(label: 'Wi-Fi fail', active: false, onTap: ref.read(wifiProvider.notifier).failConnection),
               ],

@@ -678,6 +678,7 @@ class VehicleData {
     this.stockAutoDownload,
     this.inclinationDegrees,
     this.touchDisabled = false,
+    this.scooterAsleep = false,
   });
 
   final int speed;
@@ -1077,6 +1078,14 @@ class VehicleData {
   /// gates touch input the same way during the grace window before the 12 V
   /// rail drops. We wrap the DesignCanvas in an IgnorePointer driven by this.
   final bool touchDisabled;
+
+  /// Locked, `BOOL_HEAD_UNIT_POWER_FLAG` false, and the display went off
+  /// since: the VCU has cut the head unit and sleeps. A display woken now
+  /// (adb, a diagnostics app, the power key) shows a lock screen that cannot
+  /// unlock anything: HHMIS still answers a right PIN with success, but the
+  /// VCU never leaves LOCK (2026-11-21, 2026-11-25, Gen 3). Stock HHMIC keeps
+  /// touch off until the flag is true again; the lock screen goes black.
+  final bool scooterAsleep;
 
   /// The one "is this number worth showing" decision: bound to HHMIS and
   /// the values are live. Per-value getters add "and it has arrived", since
@@ -1506,6 +1515,7 @@ class VehicleData {
     int? Function()? stockAutoDownload,
     int? Function()? inclinationDegrees,
     bool? touchDisabled,
+    bool? scooterAsleep,
   }) {
     return VehicleData(
       speed: speed ?? this.speed,
@@ -1689,6 +1699,7 @@ class VehicleData {
       stockAutoDownload: stockAutoDownload != null ? stockAutoDownload() : this.stockAutoDownload,
       inclinationDegrees: inclinationDegrees != null ? inclinationDegrees() : this.inclinationDegrees,
       touchDisabled: touchDisabled ?? this.touchDisabled,
+      scooterAsleep: scooterAsleep ?? this.scooterAsleep,
     );
   }
 
@@ -1730,7 +1741,7 @@ class VehicleData {
         batteryHealthKnown,
         batteryMaxTemp, batteryMinTemp, chargeSubstate, fcChargeIdle,
         featureMirror, featureAvailable, hillHoldConsent, alarmSoundIndex, safetySensitivity, stockAutoDownload, inclinationDegrees,
-        hyperMinutesTo80, regenNotification, touchDisabled,
+        hyperMinutesTo80, regenNotification, touchDisabled, scooterAsleep,
         vehicleBrightness, customRide, customRideActive,
       ];
 

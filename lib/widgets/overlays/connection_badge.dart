@@ -15,7 +15,8 @@ class ConnectionBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final connected = ref.watch(vehicleProvider.select((v) => v.hhmisConnected && !v.hhmisStale));
+    // Asleep, the data is quiet on purpose and the screen is black.
+    final connected = ref.watch(vehicleProvider.select((v) => v.scooterAsleep || (v.hhmisConnected && !v.hhmisStale)));
     final booted = ref.watch(sessionProvider.select((s) => s.booted));
     return IgnorePointer(
       child: Align(

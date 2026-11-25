@@ -66,6 +66,7 @@ class _LockedScreenState extends ConsumerState<LockedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(vehicleProvider.select((v) => v.scooterAsleep))) return const AsleepLockView();
     final time = ref.watch(vehicleProvider.select((v) => v.time));
     // SOC 100 %, 180 km were shown before HHMIS
     // answered. '—' until the first real values arrive, after Continue
@@ -380,6 +381,65 @@ class _NotConnectedNote extends ConsumerWidget {
           "Can't reach the scooter. Still trying…",
           key: const ValueKey('lock-not-connected'),
           style: DashText.caption(18, color: DashColors.warning),
+        ),
+      ),
+    );
+  }
+}
+
+/// The lock screen while the scooter sleeps ([VehicleData.scooterAsleep]).
+/// Black, as stock is: a PIN typed now would be answered "right" and unlock
+/// nothing. A touch shows how to get out for a few seconds.
+class AsleepLockView extends StatefulWidget {
+  const AsleepLockView({super.key});
+
+  static const hintFor = Duration(seconds: 4);
+
+  @override
+  State<AsleepLockView> createState() => _AsleepLockViewState();
+}
+
+class _AsleepLockViewState extends State<AsleepLockView> {
+  bool _hint = false;
+  Timer? _hide;
+
+  void _touch() {
+    if (!_hint) logEvent('ui', 'asleep_hint', {});
+    setState(() => _hint = true);
+    _hide?.cancel();
+    _hide = Timer(AsleepLockView.hintFor, () {
+      if (mounted) setState(() => _hint = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _hide?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _touch(),
+      child: ColoredBox(
+        key: const ValueKey('lock-asleep'),
+        color: const Color(0xFF000000),
+        child: Center(
+          child: AnimatedOpacity(
+            opacity: _hint ? 0.6 : 0,
+            duration: const Duration(milliseconds: 300),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Fixed greys: the black does not follow the theme, so neither can the text.
+                Text('The scooter is asleep', style: DashText.caption(26, color: const Color(0xFFD9D9D9))),
+                const SizedBox(height: 10),
+                Text('Wake it, then enter your passcode', style: DashText.caption(20, color: const Color(0xFF8A8A8A))),
+              ],
+            ),
+          ),
         ),
       ),
     );

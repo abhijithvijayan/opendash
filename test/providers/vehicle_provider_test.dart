@@ -318,6 +318,116 @@ void main() {
       });
     });
 
+    // 2026-11-21 and 2026-11-25, Gen 3: the display was woken (adb) after the
+    // scooter had locked and gone to sleep. HHMIS answered the right PIN with
+    // success after ~3 s, the VCU never left LOCK, and the pad stayed green
+    // and dead, even once the scooter woke.
+    group('scooter asleep at the lock screen', () {
+      void lockAndCut(_Harness h) {
+        h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': true, 'INT_VEHICLE_STATE': 3});
+        h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': false, 'INT_VEHICLE_STATE': 0});
+      }
+
+      test('the display going off after the power flag drops while locked means asleep', () {
+        AnalyticsLogger.instance.resetForTest();
+        final h = _Harness();
+        lockAndCut(h);
+        expect(h.state.scooterAsleep, isFalse, reason: 'the VCU is still up until it cuts the display');
+        h.notifier.onLifecyclePause();
+        expect(h.state.scooterAsleep, isTrue);
+        h.notifier.onLifecycleResume();
+        expect(h.state.scooterAsleep, isTrue, reason: 'a woken display does not wake the scooter');
+        h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': true});
+        expect(h.state.scooterAsleep, isFalse);
+        expect(AnalyticsLogger.instance.recent('safety', 'scooter_asleep').map((e) => e['data']).toList(), [
+          {'on': true},
+          {'on': false, 'by': 'power_flag'},
+        ]);
+        h.dispose();
+      });
+
+      test('not asleep when unlocked or the flag is up', () {
+        final h = _Harness();
+        h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': true, 'INT_VEHICLE_STATE': 0});
+        h.notifier.onLifecyclePause();
+        expect(h.state.scooterAsleep, isFalse, reason: 'flag up');
+        h.notifier.onLifecycleResume();
+        h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': false, 'INT_VEHICLE_STATE': 3});
+        h.notifier.onLifecyclePause();
+        expect(h.state.scooterAsleep, isFalse, reason: 'unlocked: another app in front');
+        h.dispose();
+      });
+
+      test('a live state other than LOCK wakes it (PASSCODE on wake)', () {
+        final h = _Harness();
+        lockAndCut(h);
+        h.notifier.onLifecyclePause();
+        h.notifier.onEvent({'INT_VEHICLE_STATE': 2});
+        expect(h.state.scooterAsleep, isFalse);
+        h.dispose();
+      });
+
+      test('asleep wipes typed digits', () {
+        final h = _Harness();
+        lockAndCut(h);
+        final p = h.container.read(passcodeProvider.notifier);
+        p.enterDigit(1);
+        p.enterDigit(2);
+        h.notifier.onLifecyclePause();
+        expect(h.container.read(passcodeProvider).enteredDigits, isEmpty);
+        h.dispose();
+      });
+
+      test('a right PIN the VCU never acts on frees the pad after a while', () {
+        fakeAsync((async) {
+          AnalyticsLogger.instance.resetForTest();
+          final h = _Harness();
+          final toasts = <String>[];
+          h.container.listen(toastProvider, (_, t) {
+            if (t != null) toasts.add(t.message);
+          });
+          h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': true, 'INT_VEHICLE_STATE': 0});
+          final p = h.container.read(passcodeProvider.notifier);
+          for (final d in [1, 2, 3, 4, 5, 6]) {
+            p.enterDigit(d);
+          }
+          async.flushMicrotasks();
+          h.notifier.onEvent({'_passcode': {'success': true, 'remaining': 5}});
+          async.flushMicrotasks();
+          expect(h.container.read(passcodeProvider).lastResult, PasscodeResult.success);
+          async.elapse(PasscodeNotifier.unlockWait - const Duration(milliseconds: 100));
+          expect(h.container.read(passcodeProvider).lastResult, PasscodeResult.success);
+          async.elapse(const Duration(milliseconds: 200));
+          final pass = h.container.read(passcodeProvider);
+          expect(pass.lastResult, isNull);
+          expect(pass.enteredDigits, isEmpty);
+          expect(toasts, ["The scooter didn't unlock. Wake it and try again"]);
+          expect(AnalyticsLogger.instance.recent('safety', 'unlock_not_followed'), hasLength(1));
+          p.enterDigit(7);
+          expect(h.container.read(passcodeProvider).enteredDigits, [7], reason: 'the pad takes digits again');
+          h.dispose();
+        });
+      });
+
+      test('a right PIN that unlocks leaves no timer behind', () {
+        fakeAsync((async) {
+          AnalyticsLogger.instance.resetForTest();
+          final h = _Harness();
+          h.container.listen(toastProvider, (_, _) {});
+          h.notifier.onEvent({'BOOL_HEAD_UNIT_POWER_FLAG': true, 'INT_VEHICLE_STATE': 0});
+          final p = h.container.read(passcodeProvider.notifier);
+          for (final d in [1, 2, 3, 4, 5, 6]) {
+            p.enterDigit(d);
+          }
+          async.flushMicrotasks();
+          h.notifier.onEvent({'_passcode': {'success': true, 'remaining': 5}, 'INT_VEHICLE_STATE': 3});
+          async.elapse(const Duration(seconds: 10));
+          expect(AnalyticsLogger.instance.recent('safety', 'unlock_not_followed'), isEmpty);
+          h.dispose();
+        });
+      });
+    });
+
     // An unknown INT_VEHICLE_COMMAND ordinal
     // must not clear the current notice. Only a 0 close or a new known
     // ordinal replaces it. knownUnmappedCommands log as known but also
