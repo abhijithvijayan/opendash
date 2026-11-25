@@ -40,6 +40,7 @@
 - [Before You Install](#before-you-install)
 - [Installing](#installing)
 - [Updating](#updating)
+- [Scooter Firmware Updates and OTA Shield](#scooter-firmware-updates-and-ota-shield)
 - [Going Back to the Stock Dashboard](#going-back-to-the-stock-dashboard)
 - [Pulling Logs for a Bug Report](#pulling-logs-for-a-bug-report)
 - [Privacy](#privacy)
@@ -121,7 +122,7 @@ Ride as you would with the stock dashboard. If anything on screen looks wrong, s
 
 - **You need adb access to the scooter's head unit.** The scooter does not offer this out of the box. How to get it on a Gen 1 is described in [ola-s1-pro-gen1](https://github.com/abhijithvijayan/ola-s1-pro-gen1#getting-access). [Axiom](#or-install-from-your-phone-with-axiom) can also install OpenDash from your phone. Only do this on a scooter you own.
 - **The stock dashboard stops while OpenDash is the home screen.** On Gen 1, a few stock services are started only by the stock dashboard and do not run under OpenDash: cloud notifications, AI range, AI indicator auto-off, group rides and the built-in navigation.
-- **Everything behind the dashboard keeps running as before**: the scooter's telemetry and its uploads to the manufacturer, remote commands from the phone app, the scooter's firmware updater, the motor sound and chimes.
+- **Everything behind the dashboard keeps running as before**: the scooter's telemetry and its uploads to the manufacturer, remote commands from the phone app, the scooter's firmware updater, the motor sound and chimes. The one exception is OTA Shield, a separate app you can choose to install; see [Scooter Firmware Updates and OTA Shield](#scooter-firmware-updates-and-ota-shield).
 - **The install script changes the head unit's display density.** Uninstalling puts it back.
 - **It may affect your warranty.** Read the [disclaimer](#disclaimer).
 
@@ -200,6 +201,20 @@ OpenDash checks this repository's releases by itself. When a new version is out,
 
 You can also install a newer APK with `scripts/install.sh` as above, at any time.
 
+## Scooter Firmware Updates and OTA Shield
+
+OpenDash never downloads, installs or accepts a firmware update for the scooter. When the scooter says one is waiting, OpenDash tells you, and you can open the stock dashboard to install it.
+
+Some riders want to stop firmware updates from arriving at all. [OTA Shield](https://codeberg.org/pitzel/ota-shield) is a separate, optional app that does this. It is made by another developer, not by OpenDash. OpenDash can install it from its Apps screen, shows its status in **Settings → Updates**, and can switch it on, but turning it off is done in OTA Shield itself.
+
+Before you install it, know what it does:
+
+- **It holds back every firmware update**, including ones that fix safety problems or that the manufacturer sends as part of a recall. If you use it, keep an eye on the manufacturer's notices and recalls, and install important updates yourself.
+- **It sits between the scooter and the manufacturer's cloud.** It needs root on the head unit, adds its own certificate to the ones the system trusts, and reads the scooter's encrypted traffic to the manufacturer so that it can drop update messages. Everything else is passed on, so the phone app keeps working.
+- This goes further than replacing the dashboard. It may break the terms of the scooter's connected services and affect your warranty more than OpenDash alone.
+
+If OTA Shield cannot start its block when the scooter powers on, its fail-safe may cut the scooter off from the manufacturer's cloud completely, and the phone app stops working until the block starts. OpenDash shows this in **Settings → Updates**.
+
 ## Going Back to the Stock Dashboard
 
 To make the stock dashboard the home screen again and remove OpenDash:
@@ -234,12 +249,12 @@ The log is written so that it can be shared: identifiers such as the VIN, serial
 - **Anonymous install count.** So we know how many scooters run OpenDash and which versions are still in use, OpenDash sends one small message at most once a week to a server of ours ([`server/usage`](server/usage)). This is the whole message:
 
   ```json
-  {"v":2,"week":"2026-W48","new":false,"app":"0.2.1","build":2001,"gen":"1","model":"S1 Pro","moveos":"4.6.14","stock":"4.6.14","android":"10"}
+  {"v":2,"week":"2026-W48","new":false,"app":"0.3.0","build":30000,"gen":"1","model":"S1 Pro","moveos":"4.6.14","stock":"4.6.14","android":"10"}
   ```
 
   `new` is true only on the first message after an install. The app also attaches a few seconds' worth of proof of work to each message, so that faking many messages costs real computing time. There is no ID of any kind, so two messages cannot be told to come from the same scooter. The server keeps the country the message came from and does not keep your IP address. Turn it off in **Settings → Updates → Count this install**; once off, nothing is sent.
 - Apart from that message, OpenDash only talks to GitHub (to check for its own updates and those of the apps it offers) and uses Cloudflare's public DNS to look up addresses when the mobile network's own DNS fails. None of these requests carries anything about the rider or the scooter.
-- The stock software behind the dashboard keeps reporting to the manufacturer exactly as it does with the stock dashboard. OpenDash neither adds to nor blocks that.
+- The stock software behind the dashboard keeps reporting to the manufacturer exactly as it does with the stock dashboard. OpenDash neither adds to nor blocks that. If you install [OTA Shield](#scooter-firmware-updates-and-ota-shield), that app reads the scooter's traffic to the manufacturer and drops firmware update messages; OpenDash only reads its status.
 
 ## Building from Source
 
@@ -280,20 +295,21 @@ Please file an issue [here](https://github.com/abhijithvijayan/opendash/issues/n
 
 OpenDash is provided **as is**, without warranty of any kind, and you use it **entirely at your own risk**.
 
-- It is an independent, non-commercial community project. It is not made, endorsed, sponsored or supported by Ola Electric Mobility Ltd. or any of its affiliates.
+- It is an independent, free and open-source community project. It is not made, endorsed, sponsored or supported by Ola Electric Mobility Ltd. or any of its affiliates.
 - Installing it requires access to your scooter's head unit that the manufacturer does not offer. Doing so, or running a third-party dashboard, may void your warranty, and the manufacturer or its service centres may refuse support while it is installed.
 - A manufacturer software update may change or remove OpenDash, or stop it from working.
+- Blocking firmware updates with a third-party app such as OTA Shield also blocks safety fixes and recall updates. That is your choice and your responsibility.
 - A dashboard shows information that matters while riding. OpenDash may show something wrong or miss something the stock dashboard would show. Do not rely on it alone, keep your eyes on the road, and follow the traffic laws where you ride.
 - Use it only on a scooter you own, or with the owner's permission.
 - The authors and contributors are not liable for any damage to your scooter, injury, loss, fine, or any other consequence of using it.
 
-**What is in this repository.** OpenDash is original work. It contains no code, firmware, images, sounds, fonts or other assets from Ola Electric or from the scooter's software. Nothing from the stock software is redistributed here or in the app. Where OpenDash needs to work together with the scooter's own software (the names of the messages it exchanges with it, for example), that was learned by studying a scooter the authors own, for the sole purpose of interoperability, with help from owners who tested beta builds on their own scooters. The app reads what it needs from the software already installed on each scooter. The font used is [Archivo](https://fonts.google.com/specimen/Archivo), under the SIL Open Font License.
+**What is in this repository.** OpenDash is original work. It contains no code, firmware, images, sounds or fonts from Ola Electric or from the scooter's software, and no part of the stock software is redistributed here or in the app. To work together with the scooter, OpenDash uses facts about it that were learned by studying a scooter the authors own, for the sole purpose of interoperability, with help from owners who tested beta builds on their own scooters: the names of the messages it exchanges with the scooter's software, and, for the Diagnostics screen, the scooter's fault codes, the names of its fault flags and short descriptions of what each code means, taken from the diagnostic definitions found on the scooter. Where it can, the app reads what it needs from the software already installed on each scooter. The font used is [Archivo](https://fonts.google.com/specimen/Archivo), under the SIL Open Font License.
 
 ## Trademarks
 
 Ola, Ola Electric, S1, S1 Pro and MoveOS are trademarks of their respective owners. They are used here only to say which scooters OpenDash works with. That use does not imply any affiliation with or endorsement by them.
 
-Android is a trademark of Google LLC. Flutter is a trademark of Google LLC.
+Android, Android Auto and Flutter are trademarks of Google LLC. CarPlay is a trademark of Apple Inc.
 
 ## License
 
