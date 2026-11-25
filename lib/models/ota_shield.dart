@@ -34,7 +34,7 @@ class OtaShieldUpgrade {
       );
 }
 
-/// What OTA Shield's own service says (its builds from 2026-11-25 on).
+/// What OTA Shield's own service says (1.1.0 on, its API version 2).
 /// [activated] is OTA Shield's saved intent, not proof its daemon runs:
 /// [OtaShieldReport.running] is that.
 class OtaShieldService {
@@ -85,7 +85,7 @@ class OtaShieldService {
 /// What OTA Shield's daemon answered on its local control port. Not
 /// [running] when nothing answered: the block is off, or OTA Shield was
 /// never activated since the head unit started. [service] is null for an
-/// OTA Shield without its service (builds before 2026-11-25).
+/// OTA Shield before 1.1.0, whose service OpenDash does not use.
 class OtaShieldReport {
   const OtaShieldReport({
     required this.running,

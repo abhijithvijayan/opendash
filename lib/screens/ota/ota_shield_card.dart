@@ -103,7 +103,7 @@ class OtaShieldCard extends ConsumerWidget {
           else if (report != null)
             Text(
               service == null
-                  ? 'OTA Shield is installed but its blocker is not running, so Ola can send updates. Open it and activate the block.'
+                  ? 'OTA Shield is installed but its blocker is not running, so Ola can send updates. Open it and activate the block. From OTA Shield 1.1.0 on, it can be activated from here.'
                   : 'OTA Shield is installed but its blocker is not running, so Ola can send updates.',
               key: const ValueKey('shield-off-hint'),
               style: DashText.caption(16),

@@ -23,11 +23,16 @@ import org.json.JSONObject
 ///   (`DaemonControlServer`), open exactly while the daemon runs: the only
 ///   proof the block is up, and where the counts come from. Only GET_STATS
 ///   and GET_FOTA_UPDATES are sent, never FLUSH_STATS or CLEAR_FOTA_UPDATES.
-/// - its exported service (`IOtaShieldService`, from its build of
-///   2026-11-25 on; older builds have none): whether it means to block,
+/// - its exported service (`IOtaShieldService`), used only where its
+///   `getApiVersion()` says 2 or later (1.1.0 on): whether it is activated,
 ///   whether its boot fail-safe has cut the scooter off from Ola's cloud,
-///   and where an activation is. Its `isActivated` is a saved setting, not
-///   the daemon, so the port still decides "running".
+///   and where an activation is. The port still decides "running".
+///
+/// 1.1.0 put `getApiVersion()` first, which renumbered every method: what
+/// is "deactivateBlocker" there was "disableFailsafe" in 1.0.0. So nothing
+/// is sent to a service that does not answer 2 or later to transaction 0
+/// (which is `isActivated` on 1.0.0, a 0 or a 1): a 1.0.0 is treated as
+/// having no service at all.
 ///
 /// The only things OpenDash asks the service to do are activate the block
 /// and turn off an engaged fail-safe; never deactivate it or change its boot
@@ -43,13 +48,21 @@ object OtaShield {
     private const val CALLBACK_DESCRIPTOR = "com.hxmst.otablocker.IOtaShieldCallback"
     private const val BIND_WAIT_MS = 2_000L
 
-    // IOtaShieldService's methods in declaration order, as its AIDL numbers
-    // them. These five are the only ones sent.
-    private const val TX_IS_ACTIVATED = IBinder.FIRST_CALL_TRANSACTION + 0
-    private const val TX_IS_FAILSAFE_ENGAGED = IBinder.FIRST_CALL_TRANSACTION + 1
-    private const val TX_GET_ACTIVATION_STEP = IBinder.FIRST_CALL_TRANSACTION + 3
-    private const val TX_ACTIVATE_BLOCKER = IBinder.FIRST_CALL_TRANSACTION + 6
-    private const val TX_DISABLE_FAILSAFE = IBinder.FIRST_CALL_TRANSACTION + 8
+    // IOtaShieldService's methods in declaration order, as API version 2
+    // numbers them (0 getApiVersion, 1 isActivated, 2 isFailsafeEngaged,
+    // 3 isBootFailsafeEnabled, 4 getActivationStep, 5 getStatsReportJson,
+    // 6 getFotaLogsJson, 7 activateBlocker, 8 deactivateBlocker,
+    // 9 disableFailsafe, 10 setBootFailsafeEnabled, 11 isDaemonRunning).
+    // These six are the only ones sent.
+    private const val TX_GET_API_VERSION = IBinder.FIRST_CALL_TRANSACTION + 0
+    private const val TX_IS_ACTIVATED = IBinder.FIRST_CALL_TRANSACTION + 1
+    private const val TX_IS_FAILSAFE_ENGAGED = IBinder.FIRST_CALL_TRANSACTION + 2
+    private const val TX_GET_ACTIVATION_STEP = IBinder.FIRST_CALL_TRANSACTION + 4
+    private const val TX_ACTIVATE_BLOCKER = IBinder.FIRST_CALL_TRANSACTION + 7
+    private const val TX_DISABLE_FAILSAFE = IBinder.FIRST_CALL_TRANSACTION + 9
+
+    /// The first API version whose numbering is the one above.
+    private const val API = 2
 
     @Volatile private var service: IBinder? = null
     @Volatile private var binding = false
@@ -112,7 +125,7 @@ object OtaShield {
                 if (activation?.get("phase") == "running") {
                     true
                 } else {
-                    val binder = bound(context)
+                    val binder = compatible(context)
                     if (binder == null) {
                         false
                     } else {
@@ -134,7 +147,7 @@ object OtaShield {
         val context = activity.applicationContext
         Thread {
             val done = try {
-                bound(context)?.let { call(it, TX_DISABLE_FAILSAFE) { r -> r.readInt() != 0 } } ?: false
+                compatible(context)?.let { call(it, TX_DISABLE_FAILSAFE) { r -> r.readInt() != 0 } } ?: false
             } catch (e: Exception) {
                 false
             }
@@ -143,7 +156,7 @@ object OtaShield {
     }
 
     private fun readService(context: Context): Map<String, Any?>? {
-        val binder = bound(context) ?: return null
+        val binder = compatible(context) ?: return null
         return mapOf(
             "activated" to call(binder, TX_IS_ACTIVATED) { it.readInt() != 0 },
             "failsafe" to call(binder, TX_IS_FAILSAFE_ENGAGED) { it.readInt() != 0 },
@@ -165,6 +178,14 @@ object OtaShield {
             data.recycle()
             reply.recycle()
         }
+    }
+
+    /// The service, only when it numbers its methods as above: asked before
+    /// every use, as OTA Shield can be updated while OpenDash runs.
+    private fun compatible(context: Context): IBinder? {
+        val binder = bound(context) ?: return null
+        val api = call(binder, TX_GET_API_VERSION) { it.readInt() }
+        return if (api >= API) binder else null
     }
 
     /// OTA Shield's service, bound once and kept for the life of the
