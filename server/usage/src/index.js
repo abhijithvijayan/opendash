@@ -77,7 +77,9 @@ export async function check(raw, now) {
     // Optional: apps before it was added don't send it.
     android: b.android === undefined ? '' : text(b.android),
   };
-  if (b.v !== 2 || Object.values(row).some((x) => x === null) || !row.app) return null;
+  // No stock service version: the app ran where there is no stock service,
+  // a phone and not a scooter (apps before 0.3.3 sent these).
+  if (b.v !== 2 || Object.values(row).some((x) => x === null) || !row.app || !row.stock) return null;
   const p = await proof(outer.ping, outer.n);
   if (p.bits < BITS) return null;
   return { ...row, proof: p.hex };

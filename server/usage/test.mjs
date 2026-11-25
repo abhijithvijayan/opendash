@@ -48,3 +48,8 @@ test('the Android version is kept, and an app too old to send it still counts', 
   const odd = payload({ android: '10; DROP TABLE' });
   assert.equal(await check(JSON.stringify({ ping: odd, n: solve(odd, 22) }), NOW), null);
 });
+
+test('a ping without the stock service version is refused: it came from a phone, not a scooter', async () => {
+  const phone = payload({ gen: '', model: '', moveos: '', stock: '', android: '16' });
+  assert.equal(await check(JSON.stringify({ ping: phone, n: solve(phone, 22) }), NOW), null);
+});
