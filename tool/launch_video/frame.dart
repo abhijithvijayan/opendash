@@ -43,7 +43,7 @@ class VideoFrame extends StatelessWidget {
   final ValueListenable<FrameState> state;
   final Widget dash;
 
-  static const dashScale = 1.14;
+  static const dashScale = 1.0;
 
   @override
   Widget build(BuildContext context) {
@@ -58,22 +58,20 @@ class VideoFrame extends StatelessWidget {
             final card = scene.kind != SceneKind.dashWithCaption;
             // A slow push-in keeps a held screen alive.
             final push = 1 + 0.012 * s.frame / s.frames;
-            final w = 1280 * dashScale, h = 768 * dashScale;
+            final w = 1280 * dashScale;
+            final housing = DisplayHousing.sizeFor(w);
             return Stack(
               children: [
                 Positioned(
-                  left: (1920 - w) / 2,
-                  top: card ? (1080 - h) / 2 : 34,
-                  width: w,
-                  height: h,
+                  left: (1920 - housing.width) / 2,
+                  top: card ? (1080 - housing.height) / 2 : 28,
+                  width: housing.width,
+                  height: housing.height,
                   child: Opacity(
                     opacity: scene.dashOpacity,
                     child: Transform.scale(
                       scale: push,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: FittedBox(child: SizedBox(width: 1280, height: 768, child: dash)),
-                      ),
+                      child: DisplayHousing(screenWidth: w, child: dash),
                     ),
                   ),
                 ),
@@ -81,7 +79,7 @@ class VideoFrame extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: 34 + h,
+                    top: 28 + housing.height,
                     bottom: 0,
                     child: Opacity(
                       opacity: s.edge(),
@@ -277,39 +275,29 @@ class ReelFrame extends StatelessWidget {
           builder: (context, s, _) {
             final scene = s.scene;
             final card = scene.kind == SceneKind.endCard;
-            final push = 1 + 0.02 * s.frame / s.frames;
-            final w = 1040 * scene.zoom * push, h = w * 0.6;
-            // The dash is seen through a window under the words; a zoomed
-            // dash is cropped by it rather than running into them.
-            const winTop = 700.0, winHeight = 820.0;
-            final left = 540 - scene.focus.dx * w / 1280;
-            final top = winHeight / 2 - scene.focus.dy * h / 768;
+            final push = 1 + 0.015 * s.frame / s.frames;
+            const screenWidth = 960.0;
+            final housing = DisplayHousing.sizeFor(screenWidth);
+            const centreY = 1030.0;
             return Stack(
               children: [
                 if (!card)
                   Positioned(
-                    left: 0,
-                    right: 0,
-                    top: scene.kind == SceneKind.claims ? 550 : winTop,
-                    height: winHeight,
-                    child: ClipRect(
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Positioned(
-                            left: left,
-                            top: top,
-                            width: w,
-                            height: h,
-                            child: Opacity(
-                              opacity: scene.dashOpacity,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(30 * scene.zoom),
-                                child: FittedBox(child: SizedBox(width: 1280, height: 768, child: dash)),
-                              ),
-                            ),
-                          ),
-                        ],
+                    left: (1080 - housing.width) / 2,
+                    top: centreY - housing.height / 2,
+                    width: housing.width,
+                    height: housing.height + 260,
+                    child: Opacity(
+                      opacity: scene.dashOpacity,
+                      child: Transform.scale(
+                        scale: push,
+                        alignment: Alignment.topCenter,
+                        child: Column(
+                          children: [
+                            DisplayHousing(screenWidth: screenWidth, child: dash),
+                            const _Mount(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -317,7 +305,7 @@ class ReelFrame extends StatelessWidget {
                   Positioned(
                     left: 70,
                     right: 110,
-                    top: 200,
+                    top: 230,
                     height: 470,
                     child: Opacity(
                       opacity: s.edge(10),
@@ -446,4 +434,115 @@ class _ReelEndCard extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// A generic instrument-display housing around the 1280x768 dash: a dark
+/// bezel, a lit top edge and a faint glass sheen.
+class DisplayHousing extends StatelessWidget {
+  const DisplayHousing({super.key, required this.screenWidth, required this.child});
+
+  final double screenWidth;
+  final Widget child;
+
+  static double _pad(double w) => w * 0.032;
+
+  static Size sizeFor(double screenWidth) {
+    final pad = _pad(screenWidth);
+    return Size(screenWidth + 2 * pad, screenWidth * 0.6 + 2 * pad * 1.15);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pad = _pad(screenWidth);
+    final size = sizeFor(screenWidth);
+    final r = pad * 1.5;
+    return SizedBox.fromSize(
+      size: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(r),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2A2E35), Color(0xFF15171B), Color(0xFF0E1013)],
+            stops: [0, 0.35, 1],
+          ),
+          border: Border.all(color: const Color(0xFF3B4048), width: 1.5),
+          boxShadow: const [
+            BoxShadow(color: Color(0xCC000000), blurRadius: 60, offset: Offset(0, 30)),
+            BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 2)),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: pad, vertical: pad * 1.15),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(r * 0.35),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                FittedBox(child: SizedBox(width: 1280, height: 768, child: child)),
+                const IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment(0.2, 0.3),
+                        colors: [Color(0x14FFFFFF), Color(0x00FFFFFF)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The stalk the display sits on, fading into the background.
+class _Mount extends StatelessWidget {
+  const _Mount();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      height: 200,
+      child: ShaderMask(
+        shaderCallback: (r) => const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+        ).createShader(r),
+        blendMode: BlendMode.dstIn,
+        child: CustomPaint(painter: _MountPainter()),
+      ),
+    );
+  }
+}
+
+class _MountPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final path = Path()
+      ..moveTo(w * 0.18, 0)
+      ..lineTo(w * 0.82, 0)
+      ..lineTo(w * 0.66, size.height)
+      ..lineTo(w * 0.34, size.height)
+      ..close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF14161A), Color(0xFF262A30), Color(0xFF14161A)],
+        ).createShader(Offset.zero & size),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MountPainter oldDelegate) => false;
 }
