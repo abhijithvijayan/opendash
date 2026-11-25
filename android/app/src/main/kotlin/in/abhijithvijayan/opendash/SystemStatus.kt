@@ -324,14 +324,14 @@ class SystemStatus(private val context: Context, private val onChange: (String, 
     private fun isConnected(device: BluetoothDevice): Boolean? = linked(device)
 
     /// What stock's `VersionInfoManager.smali` reads: MoveOS is the first
-    /// line of /vendor/etc/SW_version.txt (`readVersionInfo`), the vehicle
-    /// software is data/ola/vsw.txt or /vendor/etc/vsw.txt
-    /// (`readVersionIndoFromFile`), and the VDP version is the versionName
+    /// line of SW_version.txt (`readVersionInfo`), the vehicle software is
+    /// vsw.txt (`readVersionIndoFromFile`), both where each generation keeps
+    /// them (`VersionFiles`), and the VDP version is the versionName
     /// of com.olaelectric.vehicleparser (`updateSWVersionInfo`). A file our
     /// sandbox cannot read stays blank and Settings hides its row.
     private fun readVersions() {
-        val moveOs = firstLine("/vendor/etc/SW_version.txt")
-        val vsw = firstLine("/data/ola/vsw.txt").ifEmpty { firstLine("/vendor/etc/vsw.txt") }
+        val moveOs = VersionFiles.moveOs(::firstLine)
+        val vsw = VersionFiles.vsw(::firstLine)
         val vdp = try {
             context.packageManager.getPackageInfo("com.olaelectric.vehicleparser", 0).versionName ?: ""
         } catch (_: Exception) {

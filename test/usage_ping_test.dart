@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:opendash/providers/mock_provider.dart';
 import 'package:opendash/models/scooter_model.dart';
 import 'package:opendash/models/vehicle_data.dart';
 import 'package:opendash/services/analytics_logger.dart';
@@ -59,7 +60,11 @@ void main() {
       TrustedClock.wall = () => DateTime(2026, 11, 25, 9);
       UsagePing.sendsHere = () => true;
       platform = MockPlatformService();
-      container = ProviderContainer(overrides: [platformServiceProvider.overrideWithValue(platform)]);
+      backed = true;
+      container = ProviderContainer(overrides: [
+        platformServiceProvider.overrideWithValue(platform),
+        vehicleProvider.overrideWith(_Scooter.new),
+      ]);
     });
 
     tearDown(() {
@@ -107,6 +112,16 @@ void main() {
       expect(PrefsService.getBool(PrefsKeys.usagePing, true), isFalse);
     });
 
+    test('nothing before the stock service has answered: an emulator or a broken install is not counted', () async {
+      backed = false;
+      await ping().sendIfDue();
+      expect(platform.usagePings, isEmpty);
+      backed = true;
+      container.invalidate(vehicleProvider);
+      await ping().sendIfDue();
+      expect(platform.usagePings, hasLength(1));
+    });
+
     test('nothing off a real scooter', () async {
       UsagePing.sendsHere = () => false;
       await ping().sendIfDue();
@@ -118,4 +133,12 @@ void main() {
     final source = File('android/app/src/main/kotlin/in/abhijithvijayan/opendash/UsagePing.kt').readAsStringSync();
     expect(RegExp(r'\.header\("([^"]+)"').allMatches(source).map((m) => m[1]).toList(), ['User-Agent']);
   });
+}
+
+/// Whether the mock's data reads as having come from the scooter's service.
+bool backed = true;
+
+class _Scooter extends VehicleNotifier {
+  @override
+  VehicleData build() => super.build().copyWith(hhmisBacked: backed);
 }

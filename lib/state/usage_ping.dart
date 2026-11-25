@@ -65,7 +65,10 @@ class UsagePing extends Notifier<bool> {
   @visibleForTesting
   Future<void> sendIfDue() async {
     if (!state || _sending || !sendsHere()) return;
-    if (!TrustedClock.trusted) {
+    // Counted only once the scooter's own service has answered: an emulator,
+    // a test build or a dashboard that never reached the service is not an
+    // install riding a scooter.
+    if (!TrustedClock.trusted || !ref.read(vehicleProvider).hhmisBacked) {
       _schedule(retryAfter);
       return;
     }
