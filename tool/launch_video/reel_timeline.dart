@@ -33,5 +33,10 @@ final reelTimeline = <Scene>[
     footnote: 'Other apps close back to the dash while you ride',
   ),
   sceneById('safe-mode').recut(3 * beat, subtitle: 'If it ever keeps crashing, a way back to stock'),
+  sceneById('install').recut(
+    17 * beat,
+    footnote: 'First time, it sets up access for you. Some MoveOS 4 builds need a computer',
+    phoneSpeed: 966 / 60 / (17 * beat),
+  ),
   const Scene('end', 9 * beat, kind: SceneKind.endCard, dashOpacity: 0, fadeToBlack: true),
 ];

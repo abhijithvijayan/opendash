@@ -1,6 +1,8 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart' show Icons;
 import 'package:flutter/widgets.dart';
 
 import 'timeline.dart';
@@ -12,10 +14,25 @@ const _muted = Color(0xFF9AA3AD);
 const _accent = Color(0xFF4A8FE8);
 
 class FrameState {
-  const FrameState(this.scene, this.frame, this.frames);
+  const FrameState(this.scene, this.frame, this.frames, {this.phone, this.tap, this.tapAge = 0});
   final Scene scene;
   final int frame;
   final int frames;
+
+  /// The companion's filmed frame for a phone scene, and a finger on it:
+  /// where (in the phone's pixels) and how far through its 0..1 fade.
+  final ui.Image? phone;
+  final Offset? tap;
+  final double tapAge;
+
+  /// The step of [Scene.words] that is current.
+  int get step {
+    var i = 0;
+    for (var k = 0; k < scene.wordAt.length; k++) {
+      if (seconds >= scene.wordAt[k]) i = k;
+    }
+    return i;
+  }
 
   double get seconds => frame / 60;
 
@@ -62,7 +79,7 @@ class VideoFrame extends StatelessWidget {
             final housing = DisplayHousing.sizeFor(w);
             return Stack(
               children: [
-                Positioned(
+                if (scene.kind != SceneKind.phone) Positioned(
                   left: (1920 - housing.width) / 2,
                   top: card ? (1080 - housing.height) / 2 : 28,
                   width: housing.width,
@@ -99,6 +116,7 @@ class VideoFrame extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (scene.kind == SceneKind.phone) Positioned.fill(child: _InstallScene(s)),
                 if (scene.kind == SceneKind.titleCard) Positioned.fill(child: _TitleCard(s)),
                 if (scene.kind == SceneKind.claims) Positioned.fill(child: _Claims(s)),
                 if (scene.kind == SceneKind.endCard) Positioned.fill(child: _EndCard(s)),
@@ -281,7 +299,7 @@ class ReelFrame extends StatelessWidget {
             const centreY = 1030.0;
             return Stack(
               children: [
-                if (!card)
+                if (!card && scene.kind != SceneKind.phone)
                   Positioned(
                     left: (1080 - housing.width) / 2,
                     top: centreY - housing.height / 2,
@@ -301,7 +319,15 @@ class ReelFrame extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (scene.kind == SceneKind.dashWithCaption || scene.kind == SceneKind.titleCard)
+                if (scene.kind == SceneKind.phone)
+                  Positioned(
+                    left: (1080 - 1000 * phoneAspect) / 2,
+                    top: 760,
+                    height: 1000,
+                    width: 1000 * phoneAspect,
+                    child: Opacity(opacity: s.edge(10), child: PhoneHousing(state: s)),
+                  ),
+                if (scene.kind == SceneKind.dashWithCaption || scene.kind == SceneKind.titleCard || scene.kind == SceneKind.phone)
                   Positioned(
                     left: 70,
                     right: 110,
@@ -317,7 +343,11 @@ class ReelFrame extends StatelessWidget {
                             const SizedBox(height: 18),
                           ],
                           Text(scene.title, textAlign: TextAlign.center, style: _wide(scene.kind == SceneKind.titleCard ? 104 : 58, weight: 750, width: 106)),
-                          if (scene.subtitle != null) ...[
+                          if (scene.kind == SceneKind.phone) ...[
+                            const SizedBox(height: 18),
+                            Text('${s.step + 1}. ${scene.words[s.step]}',
+                                textAlign: TextAlign.center, style: _wide(38, color: _accent, weight: 600, width: 100).copyWith(height: 1.25)),
+                          ] else if (scene.subtitle != null) ...[
                             const SizedBox(height: 18),
                             Text(scene.subtitle!, textAlign: TextAlign.center, style: _wide(36, color: _muted, weight: 450, width: 100).copyWith(height: 1.25)),
                           ],
@@ -545,4 +575,156 @@ class _MountPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MountPainter oldDelegate) => false;
+}
+
+
+/// Width over height of the filmed phone screen, with its housing.
+const phoneAspect = 1080 / 2340 * 1.0;
+
+/// A plain phone around the companion's frames: black body, a punch-hole
+/// camera, a drawn status bar, and a dot where the finger lands.
+class PhoneHousing extends StatelessWidget {
+  const PhoneHousing({super.key, required this.state});
+
+  final FrameState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final w = box.maxWidth, h = box.maxHeight;
+      final bezel = w * 0.028;
+      final screenW = w - 2 * bezel, screenH = h - 2 * bezel;
+      final k = screenW / 1080;
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF050607),
+          borderRadius: BorderRadius.circular(w * 0.13),
+          border: Border.all(color: const Color(0xFF30343B), width: 2),
+          boxShadow: const [BoxShadow(color: Color(0xCC000000), blurRadius: 60, offset: Offset(0, 30))],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(bezel),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(w * 0.105),
+            child: Stack(
+              children: [
+                if (state.phone != null)
+                  Positioned.fill(child: RawImage(image: state.phone, fit: BoxFit.fill, filterQuality: FilterQuality.medium)),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: 63 * k,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 44 * k),
+                    child: Row(
+                      children: [
+                        Text('10:24', style: _wide(30 * k, weight: 600, width: 100)),
+                        const Spacer(),
+                        Icon(Icons.wifi, size: 34 * k, color: _fg),
+                        SizedBox(width: 8 * k),
+                        Icon(Icons.battery_full, size: 34 * k, color: _fg),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: screenW / 2 - 14 * k,
+                  top: 18 * k,
+                  width: 28 * k,
+                  height: 28 * k,
+                  child: const DecoratedBox(decoration: BoxDecoration(color: Color(0xFF000000), shape: BoxShape.circle)),
+                ),
+                if (state.tap != null)
+                  Positioned(
+                    left: state.tap!.dx * k - 60 * k,
+                    top: state.tap!.dy * k * (screenH / (2340 * k)) - 60 * k,
+                    width: 120 * k,
+                    height: 120 * k,
+                    child: Opacity(
+                      opacity: (1 - state.tapAge).clamp(0.0, 1.0) * 0.55,
+                      child: Transform.scale(
+                        scale: 0.6 + 0.6 * state.tapAge,
+                        child: const DecoratedBox(decoration: BoxDecoration(color: Color(0xFFFFFFFF), shape: BoxShape.circle)),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+/// The landscape install scene: the phone on the left, the steps on the right.
+class _InstallScene extends StatelessWidget {
+  const _InstallScene(this.s);
+  final FrameState s;
+
+  @override
+  Widget build(BuildContext context) {
+    final scene = s.scene;
+    const phoneH = 960.0;
+    return Opacity(
+      opacity: s.edge(14),
+      child: Stack(
+        children: [
+          Positioned(left: 330, top: 60, height: phoneH, width: phoneH * phoneAspect, child: PhoneHousing(state: s)),
+          Positioned(
+            left: 900,
+            right: 120,
+            top: 0,
+            bottom: 0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(scene.title, style: _wide(62, weight: 750, width: 110)),
+                const SizedBox(height: 14),
+                Text(scene.subtitle!, style: _wide(28, color: _muted, weight: 450, width: 100)),
+                const SizedBox(height: 56),
+                for (var i = 0; i < scene.words.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 30),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 54,
+                          height: 54,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: i < s.step ? _accent : const Color(0x00000000),
+                              border: Border.all(color: i <= s.step ? _accent : _muted.withValues(alpha: 0.5), width: 2.5),
+                            ),
+                            child: Center(
+                              child: i < s.step
+                                  ? const Icon(Icons.check_rounded, size: 32, color: _ink)
+                                  : Text('${i + 1}', style: _wide(24, color: i == s.step ? _accent : _muted, weight: 700, width: 100)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 26),
+                        Expanded(
+                          child: Text(
+                            scene.words[i],
+                            style: _wide(32, color: i == s.step ? _fg : i < s.step ? _fg.withValues(alpha: 0.75) : _muted.withValues(alpha: 0.6), weight: i == s.step ? 650 : 500, width: 100),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 26),
+                Text('github.com/abhijithvijayan/opendash-companion', style: _wide(24, color: _accent, weight: 550, width: 100)),
+                const SizedBox(height: 10),
+                Text(scene.footnote!, style: _wide(20, color: _muted.withValues(alpha: 0.85), weight: 400, width: 100)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -14,7 +14,7 @@ import 'package:opendash/theme/dash_theme.dart';
 
 import 'director.dart';
 
-enum SceneKind { titleCard, claims, dashWithCaption, endCard }
+enum SceneKind { titleCard, claims, dashWithCaption, endCard, phone }
 
 class Scene {
   const Scene(
@@ -35,6 +35,7 @@ class Scene {
     this.tick,
     this.zoom = 1,
     this.focus = const Offset(640, 384),
+    this.phoneSpeed = 1,
   });
 
   final String id;
@@ -66,6 +67,9 @@ class Scene {
   final double zoom;
   final Offset focus;
 
+  /// A phone scene plays OpenDash Companion's filmed install this many times faster.
+  final double phoneSpeed;
+
   /// The same footage at another length: its motion runs faster or slower to fit.
   Scene recut(
     double seconds, {
@@ -79,6 +83,7 @@ class Scene {
     double? dashOpacity,
     bool? fadeFromBlack,
     List<double>? wordAt,
+    double? phoneSpeed,
   }) {
     final warp = this.seconds / seconds;
     final t = tick;
@@ -100,6 +105,7 @@ class Scene {
       tick: t == null ? null : (d, s) => t(d, s * warp),
       zoom: zoom ?? this.zoom,
       focus: focus ?? this.focus,
+      phoneSpeed: phoneSpeed ?? this.phoneSpeed,
     );
   }
 }
@@ -336,6 +342,16 @@ final timeline = <Scene>[
       d.container.read(crashRecoveryProvider.notifier).enterSafeMode();
       await d.settle(1200);
     },
+  ),
+  const Scene(
+    'install',
+    25 * beat,
+    kind: SceneKind.phone,
+    title: 'Install from your phone',
+    subtitle: 'With OpenDash Companion. No computer, no command line',
+    footnote: 'The first time, it sets up access for you. Some MoveOS 4 builds still need a computer',
+    words: ['Get OpenDash Companion on an Android phone', 'Connect to your scooter over Wi-Fi', 'Tap Install OpenDash', 'It checks the signature and sets everything up'],
+    wordAt: [0, 0.8, 5.6, 7.2],
   ),
   const Scene(
     'privacy',
