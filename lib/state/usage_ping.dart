@@ -24,8 +24,16 @@ final usagePingProvider = NotifierProvider<UsagePing, bool>(UsagePing.new);
 /// identifier: weekly users are the rows of a week, installs the rows
 /// marked `new`. On until the rider turns it off.
 class UsagePing extends Notifier<bool> {
-  /// The first try waits for the scooter to have said what it is.
-  static const firstAfter = Duration(minutes: 10);
+  /// The first try waits for the scooter to have said what it is. It was
+  /// ten minutes, and starts again with every start of OpenDash: a rider
+  /// whose rides are shorter was never counted.
+  static const firstAfter = Duration(minutes: 1);
+
+  /// Looked at again this often until the stock service has answered and
+  /// the clock is set: nothing is sent while waiting, so it costs nothing.
+  static const waitAfter = Duration(minutes: 1);
+
+  /// After a send that failed.
   static const retryAfter = Duration(minutes: 30);
 
   /// A head unit can stay up for days: the week is looked at again.
@@ -69,7 +77,7 @@ class UsagePing extends Notifier<bool> {
     // a test build or a dashboard that never reached the service is not an
     // install riding a scooter.
     if (!TrustedClock.trusted || !ref.read(vehicleProvider).hhmisBacked) {
-      _schedule(retryAfter);
+      _schedule(waitAfter);
       return;
     }
     final week = isoWeek(TrustedClock.now());

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opendash/providers/mock_provider.dart';
@@ -128,6 +129,27 @@ void main() {
       container.invalidate(vehicleProvider);
       await ping().sendIfDue();
       expect(platform.usagePings, hasLength(1));
+    });
+
+    test('a short ride is enough: sent within two minutes of start, and soon after the service answers', () {
+      fakeAsync((async) {
+        ping();
+        async.elapse(const Duration(minutes: 2));
+        expect(platform.usagePings, hasLength(1));
+      });
+    });
+
+    test('waiting for the service is looked at every minute, not every half hour', () {
+      fakeAsync((async) {
+        backed = false;
+        ping();
+        async.elapse(const Duration(minutes: 5));
+        expect(platform.usagePings, isEmpty);
+        backed = true;
+        container.invalidate(vehicleProvider);
+        async.elapse(const Duration(minutes: 2));
+        expect(platform.usagePings, hasLength(1));
+      });
     });
 
     test('nothing off a real scooter', () async {
