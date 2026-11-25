@@ -40,29 +40,10 @@ class AppLauncherOpen extends Notifier<bool> {
   void close() => state = false;
 
   /// The swipe up from the dashboard's bottom edge. Refused as [open] is,
-  /// riding or locked; each time it opens Apps counts towards hiding the
-  /// grab bar that hints at it.
+  /// riding or locked.
   void openBySwipe() {
     open();
     uiSwipe('apps-swipe-up', {'opened': state});
-    if (state) ref.read(appsSwipeCountProvider.notifier).used();
-  }
-}
-
-/// Times the rider has opened Apps with the swipe; the grab bar on the
-/// dashboard shows until [AppsSwipeCount.hintUntil].
-final appsSwipeCountProvider = NotifierProvider<AppsSwipeCount, int>(AppsSwipeCount.new);
-
-class AppsSwipeCount extends Notifier<int> {
-  static const hintUntil = 3;
-
-  @override
-  int build() => PrefsService.getInt(PrefsKeys.appsSwipeUsed, 0);
-
-  void used() {
-    if (state >= hintUntil) return;
-    state++;
-    PrefsService.setInt(PrefsKeys.appsSwipeUsed, state);
   }
 }
 

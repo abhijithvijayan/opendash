@@ -75,17 +75,18 @@ void main() {
     await swipeUp(tester);
     expect(container.read(appLauncherOpenProvider), isFalse);
     expect(AnalyticsLogger.instance.recent('ui', 'swipe').last['data'], containsPair('opened', false));
-    expect(container.read(appsSwipeCountProvider), 0, reason: 'a refused swipe does not count');
   });
 
-  testWidgets('the grab bar goes once the swipe has been used three times', (tester) async {
+  testWidgets('the grab bar stays however often the swipe is used, and is not there while locked', (tester) async {
     await pumpApp(tester);
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < 4; i++) {
       await swipeUp(tester);
       container.read(appLauncherOpenProvider.notifier).close();
       await settle(tester);
     }
-    expect(container.read(appsSwipeCountProvider), 3);
-    expect(grabber(tester), 0);
+    expect(grabber(tester), 1);
+    container.read(vehicleProvider.notifier).setLocked(true);
+    await settle(tester);
+    expect(k('apps-swipe-grabber'), findsNothing, reason: 'the lock screen takes the dashboard away');
   });
 }

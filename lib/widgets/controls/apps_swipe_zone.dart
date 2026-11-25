@@ -12,7 +12,9 @@ import '../../theme/tokens.dart';
 /// edge opens the app drawer on a phone. Only upward vertical drags are
 /// taken, so taps on the trip strip underneath (its reset button) still
 /// land. Apps refuses the swipe while riding or locked, as it refuses its
-/// icon.
+/// icon. The grab bar shows whenever the swipe would open Apps, as a
+/// phone's home bar stays: hidden after the first few swipes, the owner
+/// lost track of the gesture.
 class AppsSwipeZone extends ConsumerWidget {
   const AppsSwipeZone({super.key});
 
@@ -24,8 +26,7 @@ class AppsSwipeZone extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(uiThemeProvider);
-    final hint = ref.watch(appsSwipeCountProvider) < AppsSwipeCount.hintUntil &&
-        !ref.watch(ridingLockoutProvider) &&
+    final hint = !ref.watch(ridingLockoutProvider) &&
         !ref.watch(vehicleProvider.select((v) => v.locked));
     return SizedBox(
       height: height,

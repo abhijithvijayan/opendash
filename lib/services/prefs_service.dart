@@ -66,8 +66,6 @@ abstract final class PrefsKeys {
   /// `AmbientHealth`: milliseconds the ambient value has spent at each level.
   static const ambientHealth = 'ambientHealth';
 
-  /// Times Apps was opened by the swipe up from the dashboard's bottom edge.
-  static const appsSwipeUsed = 'appsSwipeUsed';
   static String ridingFeature(String name) => 'riding_$name';
 
   /// The last `featureAvailable` map the vehicle reported, as JSON.
