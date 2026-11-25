@@ -57,7 +57,13 @@ class OtaShieldCard extends ConsumerWidget {
     }
 
     final canActivate = installed && report != null && service != null && !report.running && !activating;
-    final error = service?.activation == 'failed' ? service?.activationError : null;
+    // OpenDash's own activation brings OTA Shield's reason; one that failed
+    // elsewhere (at power-on, or in OTA Shield) only its step.
+    final error = service?.activation == 'failed'
+        ? service?.activationError
+        : service?.step == 'FAILED'
+            ? 'OTA Shield could not start its block. Open it to see why.'
+            : null;
 
     return Container(
       key: const ValueKey('shield-card'),
@@ -110,7 +116,7 @@ class OtaShieldCard extends ConsumerWidget {
             ),
           if (error != null && !(report?.running ?? false)) ...[
             const SizedBox(height: 8),
-            Text('Last try failed: $error', key: const ValueKey('shield-error'), style: DashText.caption(16, color: DashColors.warning)),
+            Text(service?.activation == 'failed' ? 'Last try failed: $error' : error, key: const ValueKey('shield-error'), style: DashText.caption(16, color: DashColors.warning)),
           ],
           const SizedBox(height: 14),
           if (!installed)

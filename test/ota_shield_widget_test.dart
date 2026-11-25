@@ -169,6 +169,14 @@ void main() {
     expect(logged.values, isNot(contains('Root shell unavailable')));
   });
 
+  testWidgets('an activation that failed in OTA Shield or at power-on is shown too', (tester) async {
+    await pumpApp(tester,
+        installed: true, report: const OtaShieldReport(running: false, service: OtaShieldService(activated: false, failsafe: false, step: 'FAILED')));
+    await openUpdates(tester);
+    expect(tester.widget<Text>(k('shield-error')).data, 'OTA Shield could not start its block. Open it to see why.');
+    expect(k('shield-activate'), findsOneWidget);
+  });
+
   testWidgets('fail-safe on: said plainly, counts as keeping updates out, and can be lifted behind the passcode', (tester) async {
     await pumpApp(tester,
         installed: true, report: const OtaShieldReport(running: false, service: OtaShieldService(activated: true, failsafe: true, step: 'IDLE')));
