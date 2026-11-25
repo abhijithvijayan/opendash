@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/icon.svg" width="96" height="96" alt="OpenDash icon" />
+</p>
 <h1 align="center">OpenDash</h1>
 <p align="center">An open-source replacement dashboard for Ola S1 electric scooters</p>
 <div align="center">
