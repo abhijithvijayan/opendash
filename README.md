@@ -257,7 +257,7 @@ OpenDash can also open the stock dashboard from **Settings → Developer**.
 
 OpenDash keeps a local log of what happened on the scooter, to make bugs easier to find. Nothing is uploaded.
 
-**From your phone:** in OpenDash Companion, connect to the scooter and tap **Share logs**. It zips OpenDash's log with the app's own and opens the share sheet, so you can save it or attach it to an issue. **Report a problem** opens a new issue with the versions filled in.
+**From your phone:** in OpenDash Companion, connect to the scooter and tap **Share logs**. Pick OpenDash's log, the app's own log and, for a wrong reading or a fault, the CAN bus recordings; it zips them and opens the share sheet, so you can save it or attach it to an issue. **Report a problem** opens a new issue with the versions filled in.
 
 **From a computer:**
 
