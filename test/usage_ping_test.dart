@@ -64,6 +64,7 @@ void main() {
       UsagePing.sendsHere = () => true;
       platform = MockPlatformService();
       backed = true;
+      stock = '5.0.4';
       container = ProviderContainer(overrides: [
         platformServiceProvider.overrideWithValue(platform),
         vehicleProvider.overrideWith(_Scooter.new),
@@ -152,6 +153,13 @@ void main() {
       });
     });
 
+    test('nothing from a phone: no stock service installed, though the bridge reads as backed', () async {
+      stock = '';
+      container.invalidate(vehicleProvider);
+      await ping().sendIfDue();
+      expect(platform.usagePings, isEmpty);
+    });
+
     test('nothing off a real scooter', () async {
       UsagePing.sendsHere = () => false;
       await ping().sendIfDue();
@@ -168,7 +176,14 @@ void main() {
 /// Whether the mock's data reads as having come from the scooter's service.
 bool backed = true;
 
+/// The stock service's version, as OpenDash reads it from the installed
+/// package: '' where there is no stock service, as on a phone.
+String stock = '5.0.4';
+
 class _Scooter extends VehicleNotifier {
   @override
-  VehicleData build() => super.build().copyWith(hhmisBacked: backed);
+  VehicleData build() {
+    software.value = StockIdentity(version: stock, source: StockIdentity.sourceRead);
+    return super.build().copyWith(hhmisBacked: backed);
+  }
 }

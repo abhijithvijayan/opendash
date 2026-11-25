@@ -76,7 +76,11 @@ class UsagePing extends Notifier<bool> {
     // Counted only once the scooter's own service has answered: an emulator,
     // a test build or a dashboard that never reached the service is not an
     // install riding a scooter.
-    if (!TrustedClock.trusted || !ref.read(vehicleProvider).hhmisBacked) {
+    // `hhmisBacked` alone is not enough: it is true from the start on any
+    // Android device, a phone included. The stock service's version is read
+    // from its installed package, which only a head unit has.
+    final stockKnown = ref.read(scooterCapabilitiesProvider).software?.version.isNotEmpty ?? false;
+    if (!TrustedClock.trusted || !ref.read(vehicleProvider).hhmisBacked || !stockKnown) {
       _schedule(waitAfter);
       return;
     }
