@@ -1,0 +1,42 @@
+// The calls OpenDash makes to the head unit's `diagnostics_server`, and
+// nothing more: reading the CAN bus (`can_link.dart`), and running a
+// command for recovery and for pulling logs (`recovery_service.dart`,
+// `scripts/pull-logs.sh`).
+
+syntax = "proto3";
+
+package wifican;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "./wifican";
+
+enum RespStatus {
+  RESP_NONE = 0;
+  RESP_SUCCESS = 1;
+  RESP_FAIL = 2;
+}
+
+message Register {
+  repeated uint32 can_ids = 1;
+}
+
+message Response {
+  RespStatus status = 1;
+  string status_msg = 2;
+}
+
+message CANPacket {
+  bytes can_frame = 1;
+}
+
+message Command {
+  string cmd_msg = 1;
+}
+
+service WifiCanRpc {
+  rpc Init (Register) returns (Response);
+  rpc ReadCanStream (google.protobuf.Empty) returns (stream CANPacket);
+  rpc CanDumpStream (google.protobuf.Empty) returns (stream CANPacket);
+  rpc ExecuteADBCommand (Command) returns (Response);
+}

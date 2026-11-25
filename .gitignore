@@ -1,0 +1,82 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Kotlin Gradle plugin daemon session data
+/android/.kotlin/
+
+# Widget Preview related
+.widget_preview/
+
+# Pulled scooter logs (analytics, bus/burst/raw CAN captures). These may hold
+# identifiers (VIN, MAC, serials) from before capture-time masking shipped —
+# never commit them. Covers logs/, logs/ride-*, logs/logs-*, etc.
+logs/
+logs-*/
+*.jsonl
+
+# Release signing: never commit a key.
+key.properties
+*.jks
+*.keystore
+*.p12
+
+# Release output of scripts/release.sh
+/dist/
+
+# Kept on the maintainer's machine only: research notes, audits, design
+# notes, agent instructions, and files taken from the stock software for
+# reference. None of it is needed to build, test or install OpenDash.
+/docs/
+/schemas/
+/local/
+/research/
+CLAUDE.md
+.claude/
+.superpowers/
+__pycache__/
+
+# Cloudflare wrangler local state
+.wrangler/
