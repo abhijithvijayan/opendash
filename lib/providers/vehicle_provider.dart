@@ -1294,6 +1294,14 @@ class AidlVehicleNotifier extends VehicleNotifier {
   /// have no clear ordinal and latch until LOCK.
   void _vehicleCommand(int value) {
     _lastVehicleCommand = value;
+    // HHMIS resends nothing but the state when we take its slot back from
+    // the stock dashboard, so a stand moved meanwhile reads as it was
+    // (2026-11-26: 59 twice while ours said "up"). The VCU refusing over
+    // the stand says it is down.
+    if ((value == 59 || value == 160) && !state.sideStand) {
+      logEvent('hhmis', 'stand_inferred', {'command': value});
+      state = state.copyWith(sideStand: true);
+    }
     final command = vehicleCommands[value];
     final toastText = vehicleCommandToasts[value];
     final hint = switch (value) {

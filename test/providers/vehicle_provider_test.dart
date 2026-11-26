@@ -212,6 +212,24 @@ void main() {
       });
     });
 
+    // 2026-11-26: back from the stock dashboard, HHMIS resent no stand and
+    // ours read "up" while the VCU refused twice over the stand.
+    test('a stand refusal (59 / 160) means the stand is down, whatever we last heard', () {
+      fakeAsync((async) {
+        AnalyticsLogger.instance.resetForTest();
+        final h = _Harness();
+        h.notifier.onEvent({'BOOL_SIDE_STAND_ICON_STATUS': false});
+        h.notifier.onEvent({'INT_VEHICLE_COMMAND': 160});
+        expect(h.state.sideStand, isTrue);
+        expect(AnalyticsLogger.instance.recent('hhmis', 'stand_inferred'), hasLength(1));
+        h.notifier.onEvent({'INT_VEHICLE_COMMAND': 59});
+        expect(AnalyticsLogger.instance.recent('hhmis', 'stand_inferred'), hasLength(1), reason: 'already down');
+        h.notifier.onEvent({'BOOL_SIDE_STAND_ICON_STATUS': false});
+        expect(h.state.sideStand, isFalse, reason: 'the next real report wins');
+        h.dispose();
+      });
+    });
+
     // A refused start reaches us as a vehicle command (59 / 62), as a TX 14
     // popup (3 / 4 / 6 / 7), or as both: one banner, never a toast as well.
     test('a ride refusal is one surface: its banner, no toast and no notice', () {

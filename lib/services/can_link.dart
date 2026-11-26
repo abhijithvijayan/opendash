@@ -255,16 +255,21 @@ class CanLink {
   static const dumpRecheckMin = Duration(seconds: 60);
   static const dumpRecheckMax = Duration(minutes: 10);
 
-  /// A working dump on this unit goes silent about every 30 s — the server
-  /// stops sending without closing the stream (measured ~50 s
-  /// cycles, ~30 s on then ~20 s off, the off being our own stale-plus-backoff
-  /// cost). A whole-bus dump silent even [dumpStallWindow] is that cut, not a
-  /// quiet bus, so we reconnect at once on a FRESH session (reopening the dump
-  /// on the same session delivers nothing — the stall is per-session), keeping
-  /// the bridged values (no clear) and skipping the backoff. A reconnect that
-  /// stays silent is caught by the ordinary [dumpSilenceWindow] -> backoff.
-  static const dumpStallWindow = Duration(milliseconds: 2500);
-  static const dumpStallCheck = Duration(seconds: 1);
+  /// The server stops a working dump without closing it, per session: once
+  /// ~30 s in, and 17.8-18.0 s after each connect on a Gen 1 / 5.0.2 unit
+  /// (2026-11-26), where waiting 2.5 s to notice lost ~3 s of every 21 s,
+  /// a side-stand command among them. A whole-bus dump silent for
+  /// [dumpStallWindow] is that cut, not a quiet bus (no gap between frames
+  /// passed 300 ms there), so we reconnect at once on a FRESH session
+  /// (reopening the dump on the same session delivers nothing), keeping the
+  /// bridged values and skipping the backoff. A reconnect that stays silent
+  /// is caught by the ordinary [dumpSilenceWindow] -> backoff.
+  static const dumpStallWindow = Duration(seconds: 1);
+  static const dumpStallCheck = Duration(milliseconds: 250);
+
+  /// A flowing dump is moved to a fresh session this long after it opened,
+  /// ahead of the cut: a reconnect costs ~50 ms of frames, the cut ~1 s more.
+  static const dumpRotateAfter = Duration(seconds: 15);
 
   final FrameSource? _open;
   final void Function(CanEvent event) emit;
@@ -283,6 +288,7 @@ class CanLink {
   Timer? _silence;
   Timer? _dumpRecheckTimer;
   Timer? _dumpStallTimer;
+  int? _dumpOpenedMicros;
   Duration _dumpRecheck = dumpRecheckMin;
   bool _paused = false;
   Duration _backoff = retryMin;
@@ -584,6 +590,7 @@ class CanLink {
       });
       _dumpRecheckTimer?.cancel();
       _dumpRecheckTimer = _taps > 0 ? null : Timer(_dumpRecheck, _retryPrimary);
+      _dumpOpenedMicros = AnalyticsLogger.instance.monoMicros;
       _dumpStallTimer?.cancel();
       _dumpStallTimer = Timer.periodic(dumpStallCheck, (_) => _checkDumpStall());
     } catch (e) {
@@ -600,18 +607,22 @@ class CanLink {
     if (_disposed || _paused || !_usingDumpFallback || !_receivedAnyFrame) return;
     final last = _lastFrameMicros;
     if (last == null) return;
-    if (AnalyticsLogger.instance.monoMicros - last < dumpStallWindow.inMicroseconds) return;
-    _restartDump();
+    final now = AnalyticsLogger.instance.monoMicros;
+    if (now - last >= dumpStallWindow.inMicroseconds) return _restartDump();
+    final opened = _dumpOpenedMicros;
+    if (opened != null && now - opened >= dumpRotateAfter.inMicroseconds) _restartDump(rotate: true);
   }
 
   /// A full, fast reconnect: a fresh `Init` session, which the bus-tap path
   /// takes straight back to the dump. No cleared values, no backoff — unlike
   /// [_lost] — because the server is up and only capped the previous stream.
-  void _restartDump() {
+  void _restartDump({bool rotate = false}) {
     if (_disposed || _paused || _session == null || !_usingDumpFallback) return;
     final last = _lastFrameMicros;
-    logEvent('grpc', 'dump_restart',
-        {'gap_ms': last == null ? null : (AnalyticsLogger.instance.monoMicros - last) ~/ 1000});
+    if (!rotate) {
+      logEvent('grpc', 'dump_restart',
+          {'gap_ms': last == null ? null : (AnalyticsLogger.instance.monoMicros - last) ~/ 1000});
+    }
     _teardown();
     _connect();
   }
@@ -637,6 +648,7 @@ class CanLink {
     _dumpRecheckTimer = null;
     _dumpStallTimer?.cancel();
     _dumpStallTimer = null;
+    _dumpOpenedMicros = null;
     _retry?.cancel();
     _retry = null;
     _closeSession();
