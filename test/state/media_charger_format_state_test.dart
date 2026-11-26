@@ -257,7 +257,7 @@ void main() {
   });
 
   test('version constant and page count', () {
-    expect(appVersion, '0.3.4');
+    expect(appVersion, '0.3.5');
     expect(WidgetPage.count, 3);
   });
 }
