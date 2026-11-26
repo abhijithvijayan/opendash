@@ -91,12 +91,17 @@ void main() {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
     final film = Directory('$companionFilm/frames');
     final filmFrames = film.existsSync() ? (film.listSync().whereType<File>().map((f) => f.path).toList()..sort()) : <String>[];
-    final taps = filmFrames.isEmpty
-        ? const <Map<String, Object?>>[]
-        : (jsonDecode(File('$companionFilm/taps.json').readAsStringSync())['taps'] as List).cast<Map<String, Object?>>();
+    final hasFilm = File('$companionFilm/taps.json').existsSync();
     if (scenes.any((s) => s.kind == SceneKind.phone)) {
       expect(filmFrames, isNotEmpty, reason: 'film the install first: flutter test tool/promo/render_test.dart in opendash-companion');
+      // A film that stopped part-way leaves frames but no tap log.
+      final log = File('$companionFilm/taps.json');
+      expect(log.existsSync() && jsonDecode(log.readAsStringSync())['frames'] == filmFrames.length, isTrue,
+          reason: 'the companion film is incomplete; film it again');
     }
+    final taps = !hasFilm
+        ? const <Map<String, Object?>>[]
+        : (jsonDecode(File('$companionFilm/taps.json').readAsStringSync())['taps'] as List).cast<Map<String, Object?>>();
     ui.Image? shown;
     for (var i = 0; i < scenes.length; i++) {
       final scene = scenes[i];
