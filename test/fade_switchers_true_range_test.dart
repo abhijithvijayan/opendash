@@ -259,14 +259,33 @@ void main() {
       expect(designTop(tester, k('alert-banner')), closeTo(OverlayToolbar.height, 1));
     });
 
-    testWidgets('display section opens on the brightness slider', (tester) async {
+    testWidgets('display section opens on the brightness controls', (tester) async {
       await openSettings(tester);
       container.read(settingsSectionProvider.notifier).set(SettingsSection.display);
       await settle(tester);
       final brightness = tester.getRect(find.text('Brightness'));
       final theme = tester.getRect(find.text('THEME'));
       expect(brightness.top, lessThan(theme.top));
-      expect(designTop(tester, find.text('Brightness')), lessThan(200));
+      expect(designTop(tester, find.text('Auto brightness')), lessThan(200));
+    });
+
+    testWidgets('auto brightness swaps the one slider for a day and a night level', (tester) async {
+      await openSettings(tester);
+      container.read(settingsSectionProvider.notifier).set(SettingsSection.display);
+      await settle(tester);
+      expect(find.text('Brightness'), findsOneWidget, reason: 'auto off: the plain slider');
+      expect(find.text('Day brightness'), findsNothing);
+      container.read(vehicleProvider.notifier).setAmbientUsable(false);
+      container.read(ridingSettingsProvider.notifier).forceFeature(RidingFeature.autoBrightness, true);
+      await settle(tester);
+      expect(find.text('Brightness'), findsNothing);
+      expect(find.text('Day brightness'), findsOneWidget);
+      expect(find.text('Night brightness'), findsOneWidget);
+
+      container.read(vehicleProvider.notifier).setAmbientUsable(true);
+      await settle(tester);
+      expect(find.text('Day brightness'), findsNothing, reason: 'a working light sensor sets the level instead');
+      expect(find.byKey(const ValueKey('auto-brightness-note')), findsOneWidget);
     });
   });
 }

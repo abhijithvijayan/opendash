@@ -19,6 +19,8 @@ class DisplaySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = ref.watch(brightnessProvider);
     final autoBrightnessOn = ref.watch(ridingSettingsProvider.select((r) => r.isOn(RidingFeature.autoBrightness)));
+    final levels = ref.watch(autoBrightnessProvider);
+    final sensorDrives = ref.watch(vehicleProvider.select((v) => v.ambientReading != null));
     final auto = ref.watch(autoDarkModeProvider);
     final use24 = ref.watch(use24HourProvider);
     final dateOrder = ref.watch(dateOrderProvider);
@@ -29,25 +31,42 @@ class DisplaySection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader('Screen'),
-        SliderRow(
-          label: 'Brightness',
-          value: brightness.toDouble(),
-          display: '$brightness%',
-          onChanged: (x) => ref.read(brightnessProvider.notifier).set(x.round(), persist: false),
-          onChangeEnd: (x) {
-            ref.read(brightnessProvider.notifier).set(x.round());
-            ref.read(autoBrightnessProvider.notifier).learn(x.round());
-          },
+        ToggleRow(
+          key: const ValueKey('display-autoBrightness'),
+          label: RidingFeature.autoBrightness.label,
+          caption: RidingFeature.autoBrightness.caption,
+          value: autoBrightnessOn,
+          onChanged: (on) => ref.read(ridingSettingsProvider.notifier).setFeature(RidingFeature.autoBrightness, on),
         ),
-        if (autoBrightnessOn)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              'Auto brightness is on: the screen adjusts through the day. Drag to set your level for now; turn it off in Riding.',
-              key: const ValueKey('auto-brightness-note'),
-              style: DashText.caption(14, color: DashColors.ash),
-            ),
+        if (!autoBrightnessOn)
+          SliderRow(
+            label: 'Brightness',
+            value: brightness.toDouble(),
+            display: '$brightness%',
+            onChanged: (x) => ref.read(brightnessProvider.notifier).set(x.round(), persist: false),
+            onChangeEnd: (x) => ref.read(brightnessProvider.notifier).set(x.round()),
+          )
+        else if (sensorDrives)
+          _BrightnessNote("Following this scooter's light sensor. Now $brightness%.")
+        else ...[
+          SliderRow(
+            key: const ValueKey('auto-brightness-day'),
+            label: 'Day brightness',
+            value: levels.day.toDouble(),
+            display: '${levels.day}%',
+            onChanged: (x) => ref.read(autoBrightnessProvider.notifier).setDay(x.round(), commit: false),
+            onChangeEnd: (x) => ref.read(autoBrightnessProvider.notifier).setDay(x.round()),
           ),
+          SliderRow(
+            key: const ValueKey('auto-brightness-night'),
+            label: 'Night brightness',
+            value: levels.night.toDouble(),
+            display: '${levels.night}%',
+            onChanged: (x) => ref.read(autoBrightnessProvider.notifier).setNight(x.round(), commit: false),
+            onChangeEnd: (x) => ref.read(autoBrightnessProvider.notifier).setNight(x.round()),
+          ),
+          _BrightnessNote('Now $brightness%. The screen moves between the two around sunrise and in the hour before sunset.'),
+        ],
         const SettingsDivider(),
         const SectionHeader('Theme'),
         const ThemeCards(),
@@ -147,4 +166,16 @@ class DisplaySection extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _BrightnessNote extends StatelessWidget {
+  const _BrightnessNote(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        key: const ValueKey('auto-brightness-note'),
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(text, style: DashText.caption(14, color: DashColors.ash)),
+      );
 }
