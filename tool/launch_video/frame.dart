@@ -101,11 +101,11 @@ class VideoFrame extends StatelessWidget {
                     top: 28 + housing.height,
                     bottom: 0,
                     child: Opacity(
-                      opacity: s.edge(),
+                      opacity: math.min(s.edge(), s.fadeIn(scene.captionAt, scene.captionAt > 0 ? 0.6 : 0.01)),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(scene.title, style: _wide(46, weight: 650, width: 110)),
+                          Text(scene.title, style: _wide(scene.captionAt > 0 ? 58 : 46, weight: scene.captionAt > 0 ? 750 : 650, width: 110)),
                           if (scene.subtitle != null) ...[
                             const SizedBox(height: 10),
                             Text(scene.subtitle!, style: _wide(26, color: _muted, weight: 450, width: 100)),
@@ -132,7 +132,7 @@ class VideoFrame extends StatelessWidget {
                       child: ColoredBox(
                         color: _ink.withValues(
                           alpha: math.max(
-                            scene.fadeFromBlack ? 1 - (s.seconds / 1.2).clamp(0.0, 1.0) : 0.0,
+                            scene.fadeFromBlack ? 1 - (s.seconds / 0.25).clamp(0.0, 1.0) : 0.0,
                             scene.fadeToBlack ? 1 - ((s.frames - s.frame) / 60 / 1.5).clamp(0.0, 1.0) : 0.0,
                           ),
                         ),

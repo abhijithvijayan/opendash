@@ -37,6 +37,7 @@ class Scene {
     this.zoom = 1,
     this.focus = const Offset(640, 384),
     this.phoneSpeed = 1,
+    this.captionAt = 0,
   });
 
   final String id;
@@ -70,6 +71,9 @@ class Scene {
 
   /// A phone scene plays OpenDash Companion's filmed install this many times faster.
   final double phoneSpeed;
+
+  /// Seconds of the dash on its own before the words come in.
+  final double captionAt;
 
   /// The same footage at another length: its motion runs faster or slower to fit.
   Scene recut(
@@ -142,19 +146,17 @@ const _modes = [DriveMode.eco, DriveMode.normal, DriveMode.sport, DriveMode.hype
 final timeline = <Scene>[
   Scene(
     'intro',
-    8 * beat,
-    kind: SceneKind.titleCard,
-    kicker: 'Introducing',
-    title: 'OpenDash',
+    11 * beat,
+    title: 'Introducing OpenDash',
     subtitle: 'A new dashboard for Ola electric scooters with a touchscreen',
-    dashOpacity: 0.07,
     fadeFromBlack: true,
+    captionAt: 4 * beat,
     enter: (d) async {
       d.theme(DashTheme.dark);
       await d.ride();
     },
     tick: (d, t) {
-      final sweep = math.sin(math.pi * _ease(t / 4.2));
+      final sweep = math.sin(math.pi * _ease(t / 6.5));
       d.drive(76 * sweep, 5.5 * sweep);
     },
   ),
