@@ -255,20 +255,28 @@ class AppManagerNotifier extends Notifier<Map<String, AppStatus>> {
     if (cancelled()) return;
     if (path == null) return refuse('download', '${app.name}: download failed');
     _jobs.remove(app.id);
+    // A file that will not be installed goes at once.
+    Future<void> drop(String reason, String message) async {
+      await platform.deleteFile(path);
+      refuse(reason, message);
+    }
+
     final refusal = await _refusal(app, path, version, 'update_verify');
-    if (refusal != null) return refuse(refusal.$1, refusal.$2);
+    if (refusal != null) return drop(refusal.$1, refusal.$2);
     final file = await platform.apkInfo(path);
     final installed = await platform.installedInfo(app.package);
-    if (file == null || installed == null) return refuse('unreadable', "Couldn't check the ${app.name} update. Not installing");
+    if (file == null || installed == null) return drop('unreadable', "Couldn't check the ${app.name} update. Not installing");
     if (file.signer != installed.signer) {
-      return refuse('signer', "The ${app.name} update isn't signed like the copy that is installed. Not installing");
+      return drop('signer', "The ${app.name} update isn't signed like the copy that is installed. Not installing");
     }
     if (file.versionCode <= installed.versionCode) {
+      await platform.deleteFile(path);
       _newer.remove(app.id);
       state = {...state, app.id: AppStatus.installed};
       toast.show('${app.name} is already up to date');
       return;
     }
+    _updateFiles[app.id] = path;
     await _installFrom(app, path, update: true);
   }
 
@@ -278,6 +286,11 @@ class AppManagerNotifier extends Notifier<Map<String, AppStatus>> {
   /// permission detour, or a cancelled installer) installs the same file
   /// instead of fetching 21 MB again (it was once downloaded three times).
   final Map<String, String> _downloaded = {};
+
+  /// The update file handed to the installer for each app, deleted once the
+  /// new version is in. Backed out of, it stays until the next update
+  /// overwrites it, or OpenDash next starts (which empties the folder).
+  final Map<String, String> _updateFiles = {};
 
   /// Waiting on Android's "Install unknown apps" switch for OpenDash.
   (CatalogApp, String)? _awaitingPermission;
@@ -377,7 +390,10 @@ class AppManagerNotifier extends Notifier<Map<String, AppStatus>> {
       if (path == null) return failed('download', '${app.name}: download failed');
       final refusal = await _refusal(app, path, latest.version, 'install_verify');
       if (cancelled()) return null;
-      if (refusal != null) return failed(refusal.$1, refusal.$2);
+      if (refusal != null) {
+        await platform.deleteFile(path);
+        return failed(refusal.$1, refusal.$2);
+      }
       return path;
     }
   }
@@ -468,6 +484,8 @@ class AppManagerNotifier extends Notifier<Map<String, AppStatus>> {
     final ok = await tracedPlatformCall('installApk', () => platform.installApk(path), args: path);
     if (!ok) {
       _downloaded.remove(app.id);
+      _updateFiles.remove(app.id);
+      await platform.deleteFile(path);
       state = {...state, app.id: update ? AppStatus.updateAvailable : AppStatus.notInstalled};
       toast.show('${app.name}: installation failed', type: ToastType.error);
       return false;
@@ -547,7 +565,11 @@ class AppManagerNotifier extends Notifier<Map<String, AppStatus>> {
       if (newer != null) {
         final now = await platform.installedInfo(app.package);
         final updated = now != null && sameVersion(newer, now.versionName);
-        if (updated) _newer.remove(id);
+        if (updated) {
+          _newer.remove(id);
+          final file = _updateFiles.remove(id);
+          if (file != null) await platform.deleteFile(file);
+        }
         state = {...state, id: updated ? AppStatus.installed : AppStatus.updateAvailable};
         if (updated) toast.show('${app.name} updated');
         continue;
@@ -561,7 +583,8 @@ class AppManagerNotifier extends Notifier<Map<String, AppStatus>> {
                 : AppStatus.notInstalled,
       };
       if (installed) {
-        _downloaded.remove(id);
+        final file = _downloaded.remove(id);
+        if (file != null) await platform.deleteFile(file);
         toast.show('${app.name} installed');
       } else {
         _recheck?.cancel();

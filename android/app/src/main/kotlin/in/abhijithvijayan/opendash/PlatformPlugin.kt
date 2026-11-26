@@ -54,6 +54,18 @@ class PlatformPlugin private constructor(
             direct.remove(engine)?.let { PlatformReadsApiRegistrar().unregister(it, engine) }
         }
 
+        /// Downloaded APKs are referred to only from the Dart side of the
+        /// engine that fetched them. A new engine starts with none, so what
+        /// is in the folder then is left from an earlier one (an update that
+        /// went in, an app installed) and is deleted, before Dart runs.
+        private fun clearApks(activity: Activity) {
+            val files = File(activity.cacheDir, "apks").listFiles().orEmpty()
+            if (files.isEmpty()) return
+            val bytes = files.sumOf { it.length() }
+            val deleted = files.count { it.delete() }
+            Analytics.log("platform", "apks_cleared", mapOf("files" to deleted, "bytes" to bytes))
+        }
+
         fun register(activity: Activity, engine: FlutterEngine) {
             val channel = MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
             val plugin = PlatformPlugin(activity, channel)
@@ -61,6 +73,7 @@ class PlatformPlugin private constructor(
             PlatformReadsApiRegistrar().register(plugin, engine)
             direct[engine] = plugin
             Analytics.attach(channel)
+            clearApks(activity)
             Net.watch(activity)
         }
     }

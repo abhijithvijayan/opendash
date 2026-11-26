@@ -207,6 +207,7 @@ void main() {
         async.elapse(const Duration(seconds: 2));
         expect(c.read(appManagerProvider)[browser.id], AppStatus.installed);
         expect(toast(c), 'Browser updated');
+        expect(platform.deleted, ['/mock/cache/apks/browser-update.apk'], reason: 'the file goes once the update is in, not when backed out of');
         expect(logged('update_check'), hasLength(asked),
             reason: 'a check of every app after every installer spent GitHub\'s hourly limit');
       });

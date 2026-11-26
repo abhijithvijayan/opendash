@@ -101,6 +101,36 @@ void main() {
       });
     });
 
+    test('a download is deleted once the app is in, and kept while the installer was backed out of', () {
+      fakeAsync((async) {
+        setUp_();
+        final n = c.read(appManagerProvider.notifier);
+        n.install(autoApp);
+        async.elapse(const Duration(seconds: 5));
+        n.onResume();
+        async.flushMicrotasks();
+        expect(mockPlatform.deleted, isEmpty, reason: 'the tile offers the same file again');
+        n.install(autoApp);
+        async.elapse(const Duration(seconds: 2));
+        mockPlatform.setInstalled(autoApp.package);
+        n.onResume();
+        async.flushMicrotasks();
+        expect(c.read(appManagerProvider)[autoApp.id], AppStatus.installed);
+        expect(mockPlatform.deleted, ['/mock/cache/apks/${autoApp.id}.apk']);
+      });
+    });
+
+    test('a download that is refused is deleted', () {
+      fakeAsync((async) {
+        setUp_();
+        mockPlatform.signerOverride = 'ff';
+        c.read(appManagerProvider.notifier).install(autoApp);
+        async.elapse(const Duration(seconds: 5));
+        expect(c.read(appManagerProvider)[autoApp.id], AppStatus.notInstalled);
+        expect(mockPlatform.deleted, ['/mock/cache/apks/${autoApp.id}.apk']);
+      });
+    });
+
     test('reopening Apps mid-download keeps the download status; a second tap is ignored', () {
       fakeAsync((async) {
         setUp_();
