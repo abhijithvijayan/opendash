@@ -49,6 +49,7 @@
 - [Privacy](#privacy)
 - [Building from Source](#building-from-source)
 - [Related Projects](#related-projects)
+- [Credits](#credits)
 - [Issues](#issues)
 - [Disclaimer](#disclaimer)
 - [Trademarks](#trademarks)
@@ -68,7 +69,7 @@ OpenDash is only a screen. It shows what the scooter reports and asks the scoote
 - **Safety screens**: side stand, fall, accident prompt, alarm, tow and tamper, emergency sheet. They always draw on top, even over another app
 - **Charging**: time to full, charger type, charging power, energy added, charge history
 - **Settings**: riding features, sounds, display, formats, vehicle information
-- **Themes**: light and dark, switched by time of day, custom accents, automatic brightness
+- **Themes**: several built-in light and dark themes, switched by time of day, custom accents, automatic brightness
 - **Bluetooth, media and calls**: pair a phone, now-playing controls, incoming and active call screens
 - **Control panel**: quick actions, trip statistics, a performance page
 - **Diagnostics**: live battery cells and temperatures, fault flags, stored trouble codes (read only, never cleared)
@@ -190,6 +191,8 @@ apksigner verify --print-certs opendash-<version>.apk | grep SHA-256
 
 The package name is `in.abhijithvijayan.opendash`. An APK with that name signed by any other key is not an official build. Android also refuses to install an update signed by a different key over an installed one.
 
+Community forks and rebuilds of OpenDash exist. A build that is not signed with this key — one you built yourself, or one downloaded from a fork — is not an official release, is not supported here, and may differ from what this repository documents. Install an unofficial build only if you trust its source.
+
 #### 5. Install
 
 ```bash
@@ -310,6 +313,10 @@ A build signed with your own key cannot be installed over a release build, and t
 - [**ola-s1-pro-gen1**](https://github.com/abhijithvijayan/ola-s1-pro-gen1): research notes and access tools for the Gen 1 head unit
 - [**OlaMate**](https://github.com/abhijithvijayan/olamate): battery health and ride telemetry logger
 - [**Axiom**](https://codeberg.org/pitzel/axiom): CAN telemetry, fault reader and system tool for Ola scooters, an Android app that can also install OpenDash
+
+## Credits
+
+- The **Carbon GT**, **Neon Pulse**, **Emerald Stealth**, **Crimson Track**, **Dune Solar** and **Glacier Light** themes were adapted from a community theme patch by [@jbadboy007](https://github.com/jbadboy007).
 
 ## Issues
 
