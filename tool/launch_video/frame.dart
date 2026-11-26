@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart' show Icons;
 import 'package:flutter/widgets.dart';
 
+import 'package:opendash/widgets/overlays/qr_card_dialog.dart' show QrPainter;
+
 import 'timeline.dart';
 
 const videoSize = Size(1920, 1080);
@@ -207,6 +209,43 @@ class _Claims extends StatelessWidget {
   }
 }
 
+const openDashUrl = 'https://github.com/abhijithvijayan/opendash';
+const companionUrl = 'https://github.com/abhijithvijayan/opendash-companion/releases/latest';
+
+/// A scannable code on a white tile, with what it opens written under it.
+class QrTile extends StatelessWidget {
+  const QrTile({super.key, required this.url, required this.size, this.label, this.caption});
+
+  final String url;
+  final double size;
+  final String? label;
+  final String? caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          padding: EdgeInsets.all(size * 0.07),
+          decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(size * 0.08)),
+          child: CustomPaint(painter: QrPainter(url)),
+        ),
+        if (label != null) ...[
+          SizedBox(height: size * 0.07),
+          Text(label!, textAlign: TextAlign.center, style: _wide(size * 0.105, weight: 650, width: 100)),
+        ],
+        if (caption != null) ...[
+          SizedBox(height: size * 0.02),
+          Text(caption!, textAlign: TextAlign.center, style: _wide(size * 0.08, color: _muted, weight: 450, width: 100)),
+        ],
+      ],
+    );
+  }
+}
+
 class _EndCard extends StatelessWidget {
   const _EndCard(this.s);
   final FrameState s;
@@ -216,53 +255,79 @@ class _EndCard extends StatelessWidget {
     return Opacity(
       opacity: s.fadeIn(0.1, 0.6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 84),
+        padding: const EdgeInsets.fromLTRB(170, 70, 150, 56),
         child: Column(
           children: [
-            const Spacer(),
-            Text('OpenDash', style: _wide(132, weight: 800, width: 125)),
-            const SizedBox(height: 20),
-            Opacity(
-              opacity: s.fadeIn(0.8),
-              child: Text('NOW AVAILABLE IN BETA', style: _wide(36, color: _accent, weight: 650, spacing: 8)),
-            ),
-            const SizedBox(height: 44),
-            Opacity(
-              opacity: s.fadeIn(1.5),
-              child: Column(
+            Expanded(
+              child: Row(
                 children: [
-                  Text('github.com/abhijithvijayan/opendash', style: _wide(40, weight: 500, width: 100)),
-                  const SizedBox(height: 14),
-                  Text('Free and open source  ·  GPLv3 licence', style: _wide(26, color: _muted, weight: 450, width: 100)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 56),
-            Opacity(
-              opacity: s.fadeIn(2.3),
-              child: Column(
-                children: [
-                  Text('Thanks to Sid, Jacob and every beta tester', style: _wide(30, weight: 500, width: 100)),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Tested on Gen 1 (MoveOS 4 and MoveOS 5), Gen 2 (MoveOS 5) and Gen 3 (MoveOS 5).',
-                    style: _wide(24, color: _muted, weight: 450, width: 100),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('OpenDash', style: _wide(132, weight: 800, width: 125)),
+                        const SizedBox(height: 16),
+                        Opacity(
+                          opacity: s.fadeIn(0.8),
+                          child: Text('NOW AVAILABLE IN BETA', style: _wide(36, color: _accent, weight: 650, spacing: 8)),
+                        ),
+                        const SizedBox(height: 40),
+                        Opacity(
+                          opacity: s.fadeIn(1.5),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('github.com/abhijithvijayan/opendash', style: _wide(38, weight: 500, width: 100)),
+                              const SizedBox(height: 12),
+                              Text('Free and open source  ·  GPLv3 licence', style: _wide(26, color: _muted, weight: 450, width: 100)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 46),
+                        Opacity(
+                          opacity: s.fadeIn(2.3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Thanks to Sid, Jacob and every beta tester', style: _wide(30, weight: 500, width: 100)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Tested on Gen 1 (MoveOS 4 and MoveOS 5), Gen 2 (MoveOS 5) and Gen 3 (MoveOS 5).',
+                                style: _wide(24, color: _muted, weight: 450, width: 100),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 46),
+                        Opacity(
+                          opacity: s.fadeIn(3.2),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Subscribe to @PracticalOverkill for updates', style: _wide(30, color: _accent, weight: 600, width: 105)),
+                              const SizedBox(height: 10),
+                              Text('Instagram  @practical.overkill', style: _wide(24, color: _muted, weight: 500, width: 100)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Opacity(
+                    opacity: s.fadeIn(1.5),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        QrTile(url: openDashUrl, size: 250, label: 'OpenDash', caption: 'Source, releases and the README'),
+                        SizedBox(height: 44),
+                        QrTile(url: companionUrl, size: 250, label: 'OpenDash Companion', caption: 'The Android app that installs it'),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 52),
-            Opacity(
-              opacity: s.fadeIn(3.2),
-              child: Column(
-                children: [
-                  Text('Subscribe to @PracticalOverkill for updates', style: _wide(30, color: _accent, weight: 600, width: 105)),
-                  const SizedBox(height: 10),
-                  Text('Instagram  @practical.overkill', style: _wide(24, color: _muted, weight: 500, width: 100)),
-                ],
-              ),
-            ),
-            const Spacer(),
             Opacity(
               opacity: s.fadeIn(2.3),
               child: Text(
@@ -417,7 +482,7 @@ class _ReelEndCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(70, 330, 110, 0),
+      padding: const EdgeInsets.fromLTRB(70, 250, 110, 0),
       child: Column(
         children: [
           Opacity(opacity: s.fadeIn(0.05, 0.4), child: Text('OpenDash', style: _wide(124, weight: 800, width: 118))),
@@ -426,7 +491,7 @@ class _ReelEndCard extends StatelessWidget {
             opacity: s.fadeIn(0.5),
             child: Text('NOW AVAILABLE IN BETA', style: _wide(38, color: _accent, weight: 650, spacing: 6)),
           ),
-          const SizedBox(height: 70),
+          const SizedBox(height: 50),
           Opacity(
             opacity: s.fadeIn(1.0),
             child: Column(
@@ -434,10 +499,12 @@ class _ReelEndCard extends StatelessWidget {
                 Text('Free and open source', style: _wide(44, weight: 600, width: 105)),
                 const SizedBox(height: 14),
                 Text('github.com/abhijithvijayan/opendash', textAlign: TextAlign.center, style: _wide(34, color: _muted, weight: 500, width: 100)),
+                const SizedBox(height: 34),
+                const QrTile(url: openDashUrl, size: 270),
               ],
             ),
           ),
-          const SizedBox(height: 70),
+          const SizedBox(height: 50),
           Opacity(
             opacity: s.fadeIn(1.6),
             child: Column(
@@ -730,10 +797,25 @@ class _InstallScene extends StatelessWidget {
                       ],
                     ),
                   ),
-                const SizedBox(height: 26),
-                Text('github.com/abhijithvijayan/opendash-companion', style: _wide(24, color: _accent, weight: 550, width: 100)),
-                const SizedBox(height: 10),
-                Text(scene.footnote!, style: _wide(20, color: _muted.withValues(alpha: 0.85), weight: 400, width: 100)),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    const QrTile(url: companionUrl, size: 150),
+                    const SizedBox(width: 28),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Scan to get OpenDash Companion', style: _wide(26, weight: 600, width: 100)),
+                          const SizedBox(height: 8),
+                          Text('github.com/abhijithvijayan/opendash-companion', style: _wide(22, color: _accent, weight: 550, width: 100)),
+                          const SizedBox(height: 12),
+                          Text(scene.footnote!, style: _wide(19, color: _muted.withValues(alpha: 0.85), weight: 400, width: 100)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
