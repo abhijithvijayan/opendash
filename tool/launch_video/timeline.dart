@@ -387,5 +387,5 @@ final timeline = <Scene>[
     subtitle: 'No personal data collected. Your scooter\'s firmware stays your decision.',
     dashOpacity: 0,
   ),
-  const Scene('end', 13 * beat, kind: SceneKind.endCard, dashOpacity: 0, fadeToBlack: true),
+  const Scene('end', 19 * beat, kind: SceneKind.endCard, dashOpacity: 0, fadeToBlack: true),
 ];
