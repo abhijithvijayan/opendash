@@ -254,7 +254,13 @@ class _EndCard extends StatelessWidget {
             const SizedBox(height: 52),
             Opacity(
               opacity: s.fadeIn(3.2),
-              child: Text('Subscribe to @PracticalOverkill for updates', style: _wide(30, color: _accent, weight: 600, width: 105)),
+              child: Column(
+                children: [
+                  Text('Subscribe to @PracticalOverkill for updates', style: _wide(30, color: _accent, weight: 600, width: 105)),
+                  const SizedBox(height: 10),
+                  Text('Instagram  @practical.overkill', style: _wide(24, color: _muted, weight: 500, width: 100)),
+                ],
+              ),
             ),
             const Spacer(),
             Opacity(
@@ -449,7 +455,15 @@ class _ReelEndCard extends StatelessWidget {
           const SizedBox(height: 70),
           Opacity(
             opacity: s.fadeIn(2.2),
-            child: Text('Follow @PracticalOverkill for more', textAlign: TextAlign.center, style: _wide(38, color: _accent, weight: 650, width: 104)),
+            child: Column(
+              children: [
+                Text('Follow for more', textAlign: TextAlign.center, style: _wide(38, color: _accent, weight: 650, width: 104)),
+                const SizedBox(height: 14),
+                Text('Instagram  @practical.overkill', textAlign: TextAlign.center, style: _wide(30, color: _fg, weight: 550, width: 100)),
+                const SizedBox(height: 8),
+                Text('YouTube  @PracticalOverkill', textAlign: TextAlign.center, style: _wide(30, color: _fg, weight: 550, width: 100)),
+              ],
+            ),
           ),
           const SizedBox(height: 40),
           Opacity(
