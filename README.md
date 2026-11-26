@@ -316,7 +316,7 @@ A build signed with your own key cannot be installed over a release build, and t
 
 ## Credits
 
-- The **Carbon GT**, **Neon Pulse**, **Emerald Stealth**, **Crimson Track**, **Dune Solar** and **Glacier Light** themes were adapted from a community theme patch by [@jbadboy007](https://github.com/jbadboy007).
+- The **Carbon GT**, **Neon Pulse**, **Emerald Stealth**, **Crimson Track** and **Glacier Light** themes were adapted from a community theme patch by [@jbadboy007](https://github.com/jbadboy007).
 
 ## Issues
 
