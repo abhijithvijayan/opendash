@@ -16,7 +16,7 @@ const _muted = Color(0xFF9AA3AD);
 const _accent = Color(0xFF4A8FE8);
 
 class FrameState {
-  const FrameState(this.scene, this.frame, this.frames, {this.phone, this.tap, this.tapAge = 0});
+  const FrameState(this.scene, this.frame, this.frames, {this.phone, this.tap, this.tapAge = 0, this.accent});
   final Scene scene;
   final int frame;
   final int frames;
@@ -26,6 +26,9 @@ class FrameState {
   final ui.Image? phone;
   final Offset? tap;
   final double tapAge;
+
+  /// The dash's own accent at this frame, for a thumbnail's glow.
+  final Color? accent;
 
   /// The step of [Scene.words] that is current.
   int get step {
@@ -81,19 +84,27 @@ class VideoFrame extends StatelessWidget {
             final housing = DisplayHousing.sizeFor(w);
             return Stack(
               children: [
+                if (scene.kind == SceneKind.thumbnail) Positioned.fill(child: _ThumbnailBackdrop(s)),
                 if (scene.kind != SceneKind.phone) Positioned(
-                  left: (1920 - housing.width) / 2,
-                  top: card ? (1080 - housing.height) / 2 : 28,
+                  left: scene.kind == SceneKind.thumbnail ? 800 : (1920 - housing.width) / 2,
+                  top: scene.kind == SceneKind.thumbnail ? 200 : card ? (1080 - housing.height) / 2 : 28,
                   width: housing.width,
                   height: housing.height,
                   child: Opacity(
                     opacity: scene.dashOpacity,
-                    child: Transform.scale(
-                      scale: push,
+                    child: Transform(
+                      alignment: Alignment.centerLeft,
+                      transform: scene.kind == SceneKind.thumbnail
+                          ? (Matrix4.identity()
+                            ..setEntry(3, 2, 0.0006)
+                            ..rotateY(-0.38)
+                            ..scaleByDouble(1.06, 1.06, 1, 1))
+                          : (Matrix4.identity()..scaleByDouble(push, push, 1, 1)),
                       child: DisplayHousing(screenWidth: w, child: dash),
                     ),
                   ),
                 ),
+                if (scene.kind == SceneKind.thumbnail) Positioned.fill(child: _ThumbnailWords(s)),
                 if (scene.kind == SceneKind.dashWithCaption)
                   Positioned(
                     left: 0,
@@ -823,6 +834,59 @@ class _InstallScene extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// Behind a thumbnail's dash: the ink, and a glow in the ride mode's colour.
+class _ThumbnailBackdrop extends StatelessWidget {
+  const _ThumbnailBackdrop(this.s);
+  final FrameState s;
+
+  @override
+  Widget build(BuildContext context) {
+    final glow = s.accent ?? _accent;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0.45, 0.05),
+          radius: 0.9,
+          colors: [glow.withValues(alpha: 0.42), glow.withValues(alpha: 0.10), _ink],
+          stops: const [0, 0.45, 1],
+        ),
+      ),
+    );
+  }
+}
+
+/// A thumbnail's words: few, huge, readable at the size of a phone's list.
+class _ThumbnailWords extends StatelessWidget {
+  const _ThumbnailWords(this.s);
+  final FrameState s;
+
+  @override
+  Widget build(BuildContext context) {
+    final scene = s.scene;
+    final glow = s.accent ?? _accent;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(90, 0, 0, 0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final line in scene.title.split('\n'))
+            Text(line, style: _wide(200, weight: 900, width: 125).copyWith(height: 0.95, shadows: const [Shadow(color: Color(0xCC000000), blurRadius: 30)])),
+          const SizedBox(height: 26),
+          Text(scene.subtitle!, style: _wide(58, weight: 650, width: 105).copyWith(shadows: const [Shadow(color: Color(0xCC000000), blurRadius: 20)])),
+          const SizedBox(height: 34),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+            decoration: BoxDecoration(color: glow, borderRadius: BorderRadius.circular(14)),
+            child: Text(scene.footnote!, style: _wide(46, color: _ink, weight: 850, width: 110)),
           ),
         ],
       ),

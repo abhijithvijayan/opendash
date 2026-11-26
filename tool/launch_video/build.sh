@@ -3,6 +3,7 @@
 # Flutter test renderer, then ffmpeg for the encode and the music.
 #   tool/launch_video/build.sh            the full video
 #   tool/launch_video/build.sh --stills   three stills per scene, for a look
+#   tool/launch_video/build.sh --thumbnails  1280x720 thumbnails, one per look
 #   tool/launch_video/build.sh --reel     the vertical cut for Shorts and Reels (--reel --stills for a look)
 # The music is not in the repository: OPENDASH_VIDEO_MUSIC, or the default below.
 set -euo pipefail
@@ -22,6 +23,16 @@ if [[ "${1:-}" == "--reel" ]]; then
 fi
 music="${OPENDASH_VIDEO_MUSIC:-$HOME/Downloads/bensound-dontgoaway.mp3}"
 final="${OPENDASH_VIDEO_OUT:-$HOME/Movies/OpenDash-launch}"
+
+if [[ "${1:-}" == "--thumbnails" ]]; then
+  flutter test tool/launch_video/render_test.dart --dart-define=OPENDASH_NO_DEV_PANEL=true --dart-define=OPENDASH_THUMBNAIL=true
+  /bin/mkdir -p "$final/thumbnails"
+  for f in build/launch_video/thumbs/*.png; do
+    ffmpeg -v error -y -i "$f" -vf scale=1280:720 -q:v 2 "$final/thumbnails/$(basename "$f" .png).jpg"
+  done
+  echo "thumbnails: $final/thumbnails"
+  exit 0
+fi
 
 if [[ "${1:-}" == "--stills" ]]; then
   flutter test tool/launch_video/render_test.dart --dart-define=OPENDASH_NO_DEV_PANEL=true --dart-define=OPENDASH_VIDEO_REEL=$reel

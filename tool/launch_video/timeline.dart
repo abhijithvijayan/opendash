@@ -15,7 +15,7 @@ import 'package:opendash/theme/dash_theme.dart';
 
 import 'director.dart';
 
-enum SceneKind { titleCard, claims, dashWithCaption, endCard, phone }
+enum SceneKind { titleCard, claims, dashWithCaption, endCard, phone, thumbnail }
 
 class Scene {
   const Scene(

@@ -15,11 +15,13 @@ import 'package:opendash/services/platform_provider.dart';
 import 'package:opendash/state/access_state.dart';
 import 'package:opendash/state/riding_settings.dart';
 import 'package:opendash/state/settings_state.dart';
+import 'package:opendash/theme/colors.dart';
 
 import 'director.dart';
 import 'fonts.dart';
 import 'frame.dart';
 import 'reel_timeline.dart';
+import 'thumbnail_timeline.dart';
 import 'timeline.dart';
 
 const frameStep = Duration(microseconds: 1000000 ~/ 60);
@@ -28,8 +30,11 @@ const frameStep = Duration(microseconds: 1000000 ~/ 60);
 const full = bool.fromEnvironment('OPENDASH_VIDEO_FULL');
 /// The vertical cut for Shorts and Reels instead of the landscape video.
 const reel = bool.fromEnvironment('OPENDASH_VIDEO_REEL');
-const out = reel ? 'build/launch_video/reel' : 'build/launch_video';
-final scenes = reel ? reelTimeline : timeline;
+
+/// One still per thumbnail look instead of a video.
+const thumb = bool.fromEnvironment('OPENDASH_THUMBNAIL');
+const out = thumb ? 'build/launch_video/thumbs' : reel ? 'build/launch_video/reel' : 'build/launch_video';
+final scenes = thumb ? thumbnails : reel ? reelTimeline : timeline;
 
 /// OpenDash Companion's filmed install (its tool/promo/render_test.dart).
 const companionFilm = String.fromEnvironment('OPENDASH_COMPANION_FILM', defaultValue: '../opendash-companion/build/promo');
@@ -87,7 +92,7 @@ void main() {
     // Past the greeting.
     await d.settle(6000);
 
-    final dir = Directory(full ? '$out/frames' : '$out/stills');
+    final dir = Directory(thumb ? out : full ? '$out/frames' : '$out/stills');
     if (dir.existsSync()) dir.deleteSync(recursive: true);
     final film = Directory('$companionFilm/frames');
     final filmFrames = film.existsSync() ? (film.listSync().whereType<File>().map((f) => f.path).toList()..sort()) : <String>[];
@@ -128,10 +133,12 @@ void main() {
           await tester.pump(frameStep);
           old?.dispose();
         } else {
-          state.value = FrameState(scene, f, frames);
+          state.value = FrameState(scene, f, frames, accent: scene.kind == SceneKind.thumbnail ? container.read(accentProvider) : null);
           await tester.pump(frameStep);
         }
-        if (full) {
+        if (thumb) {
+          if (f == frames - 1) await captureFrame(tester, key, File('$out/${scene.id}.png'));
+        } else if (full) {
           await captureFrame(tester, key, File('${dir.path}/${filmed.toString().padLeft(5, '0')}.png'));
         } else if (f == 0 || f == frames ~/ 2 || f == frames - 1) {
           final at = f == 0 ? 'a' : f == frames - 1 ? 'c' : 'b';
