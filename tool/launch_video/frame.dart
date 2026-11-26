@@ -213,7 +213,6 @@ class _Claims extends StatelessWidget {
   }
 }
 
-const openDashUrl = 'https://github.com/abhijithvijayan/opendash';
 const companionUrl = 'https://github.com/abhijithvijayan/opendash-companion/releases/latest';
 
 /// A scannable code on a white tile, with what it opens written under it.
@@ -323,9 +322,7 @@ class _EndCard extends StatelessWidget {
                     child: const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        QrTile(url: openDashUrl, size: 250, label: 'OpenDash', caption: 'Source, releases and the README'),
-                        SizedBox(height: 44),
-                        QrTile(url: companionUrl, size: 250, label: 'OpenDash Companion', caption: 'The Android app that installs it'),
+                        QrTile(url: companionUrl, size: 340, label: 'Scan to install', caption: 'OpenDash Companion for Android'),
                       ],
                     ),
                   ),
@@ -508,7 +505,7 @@ class _ReelEndCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 Text('github.com/abhijithvijayan/opendash', textAlign: TextAlign.center, style: _wide(34, color: _muted, weight: 500, width: 100)),
                 const SizedBox(height: 34),
-                const QrTile(url: openDashUrl, size: 270),
+                const QrTile(url: companionUrl, size: 270, label: 'Scan to install', caption: 'OpenDash Companion for Android'),
               ],
             ),
           ),
