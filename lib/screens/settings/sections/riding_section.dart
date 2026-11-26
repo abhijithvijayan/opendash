@@ -22,7 +22,8 @@ class RidingSection extends ConsumerWidget {
     // auto-lock sub-toggle is rendered below the Safety group instead.
     ('Safety', [RidingFeature.fallDetection, RidingFeature.tamper, RidingFeature.motorCutOff]),
     ('Lights', [RidingFeature.smartHeadlight, RidingFeature.smartDrl, RidingFeature.autoHeadlight, RidingFeature.takeMeHome]),
-    ('Convenience', [RidingFeature.proximityUnlock, RidingFeature.autoTurnOff, RidingFeature.vacationMode, RidingFeature.predictedRange, RidingFeature.autoBrightness]),
+    // Auto brightness is in Display, next to the brightness levels it sets.
+    ('Convenience', [RidingFeature.proximityUnlock, RidingFeature.autoTurnOff, RidingFeature.vacationMode, RidingFeature.predictedRange]),
   ];
 
   @override

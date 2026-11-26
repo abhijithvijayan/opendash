@@ -138,8 +138,9 @@ void main() {
       // Tow/tamper detection carries its alarm sound chips; they stay with it.
       expect(at('Tow/tamper detection'), lessThan(at('Motor cut-off')));
       for (final f in RidingFeature.values) {
-        // sideStandCutOff toggle is hidden (cmd 67 polarity unknown).
-        if (f == RidingFeature.sideStandCutOff) {
+        // sideStandCutOff toggle is hidden (cmd 67 polarity unknown);
+        // auto brightness lives in Display with the brightness levels.
+        if (f == RidingFeature.sideStandCutOff || f == RidingFeature.autoBrightness) {
           expect(find.byKey(ValueKey('riding-${f.name}'), skipOffstage: false), findsNothing, reason: f.name);
           continue;
         }

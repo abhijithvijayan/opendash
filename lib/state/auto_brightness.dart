@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/mock_provider.dart';
@@ -34,18 +32,19 @@ final autoBrightnessProvider =
 
 /// Auto brightness. A light sensor that has proven itself on this scooter
 /// (`VehicleData.ambientReading`) sets the level; otherwise the time of day
-/// does: the rider's night level from sunset, and by day a level that
-/// follows the sun, from half way to their day level in the morning up to
-/// all of it at midday and back, eased across the hour around sunrise and
-/// the hour before sunset. (It
-/// used to ease across sunset: six minutes after it, auto was once still
-/// at 42 and the rider put it on Low.) The settings
-/// slider teaches the level for the period it is moved in; the control
-/// panel button is a boost for this outing.
+/// does: the rider's day level by day and their night level at night,
+/// eased between them across the hour around sunrise and the hour before
+/// sunset. (It used to ease across sunset: six minutes after it, auto was
+/// once still at 42 and the rider put it on Low.)
+///
+/// The two levels are set directly in Settings and hold as set. They used
+/// to be learned from the brightness slider, with the day level worked back
+/// from wherever the slider was let go so the screen climbed towards noon:
+/// a rider who set 70 in the morning found 90 at midday. The control panel
+/// button is a boost for this outing.
 class AutoBrightness extends Notifier<AutoBrightnessState> {
-  /// The level for the middle of the day, when the sun is highest. It was
-  /// 60 all day, which left the screen readable but dim in late-morning sun;
-  /// it builds up towards noon rather than sit at full all day.
+  /// Readable in direct sun. It was 60 all day, which left the screen dim
+  /// in late-morning sun.
   static const defaultDay = 90;
   static const defaultNight = 30;
   static const ramp = Duration(minutes: 30);
@@ -95,23 +94,8 @@ class AutoBrightness extends Notifier<AutoBrightnessState> {
     return 1 - (minute - (set - 2 * half)) / (2 * half);
   }
 
-  /// How high the sun is at [now]: 0 at sunrise and sunset, 1 half way
-  /// between them.
-  static double sunHeight(DateTime now, SunTimes sun) {
-    final minute = now.hour * 60 + now.minute;
-    final rise = sun.known ? sun.sunrise!.hour * 60 + sun.sunrise!.minute : SunTimes.fallbackSunriseHour * 60;
-    final set = sun.known ? sun.sunset!.hour * 60 + sun.sunset!.minute : SunTimes.fallbackSunsetHour * 60;
-    if (set <= rise) return 1;
-    return math.sin(math.pi * ((minute - rise) / (set - rise)).clamp(0.0, 1.0));
-  }
-
-  /// How far from the night level to the day level the screen is at [now]:
-  /// half way once it is day, the rest following the sun up to midday and
-  /// back down.
-  static double levelWeight(DateTime now, SunTimes sun) => dayWeight(now, sun) * (0.5 + 0.5 * sunHeight(now, sun));
-
   static int timeLevel(DateTime now, SunTimes sun, {required int day, required int night}) =>
-      (night + (day - night) * levelWeight(now, sun)).round();
+      (night + (day - night) * dayWeight(now, sun)).round();
 
   /// What auto brightness wants right now; null when it has nothing to go
   /// by (no proven sensor and a clock that cannot be right).
@@ -131,24 +115,22 @@ class AutoBrightness extends Notifier<AutoBrightnessState> {
     ref.read(brightnessProvider.notifier).set(level, persist: false);
   }
 
-  /// The settings slider was let go at [level]: with auto on and no light
-  /// sensor, that is the rider's level for this part of the day.
-  void learn(int level) {
-    if (!_on || ref.read(vehicleProvider).ambientReading != null || !TrustedClock.trusted) return;
-    final sun = ref.read(sunTimesProvider);
-    final night = dayWeight(clock(), sun) < 0.5;
-    final set = level.clamp(0, 100);
-    // By day the slider sets the level for now, and the midday level is
-    // worked back from it, so the screen stays where it was put. A level
-    // that would need a midday above 100 is held as a boost instead.
-    final midday = night ? set : (state.night + (set - state.night) / levelWeight(clock(), sun)).round();
-    final next = midday.clamp(0, 100);
-    logSettingsChange(night ? 'brightness.night_level' : 'brightness.day_level', night ? state.night : state.day, next);
-    PrefsService.setInt(night ? PrefsKeys.autoBrightnessNight : PrefsKeys.autoBrightnessDay, next);
+  /// The rider's day level, from Settings. [commit] false is a drag in
+  /// progress: the screen follows, nothing is saved. A change here ends any
+  /// boost, or the rider would not see it.
+  void setDay(int level, {bool commit = true}) => _setLevel(level, day: true, commit: commit);
+
+  /// The rider's night level, as [setDay].
+  void setNight(int level, {bool commit = true}) => _setLevel(level, day: false, commit: commit);
+
+  void _setLevel(int level, {required bool day, required bool commit}) {
+    final next = level.clamp(0, 100);
+    if (commit) {
+      logSettingsChange(day ? 'brightness.day_level' : 'brightness.night_level', day ? state.day : state.night, next);
+      PrefsService.setInt(day ? PrefsKeys.autoBrightnessDay : PrefsKeys.autoBrightnessNight, next);
+    }
     _boostTaps = 0;
-    state = night
-        ? state.copyWith(night: next, boost: () => null)
-        : state.copyWith(day: next, boost: () => midday > 100 ? set : null);
+    state = day ? state.copyWith(day: next, boost: () => null) : state.copyWith(night: next, boost: () => null);
     apply();
   }
 
