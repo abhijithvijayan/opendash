@@ -216,9 +216,19 @@ class _UpToDate extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('OpenDash is up to date', key: const ValueKey('ota-up-to-date'), style: DashText.title(20)),
+        if (ota.unreachable)
+          Text("Couldn't reach GitHub", key: const ValueKey('ota-unreachable'), style: DashText.title(20))
+        else
+          Text('OpenDash is up to date', key: const ValueKey('ota-up-to-date'), style: DashText.title(20)),
         const SizedBox(height: 4),
-        Text(checked == null ? 'Not checked yet' : 'Last checked $checked', style: DashText.caption(16)),
+        Text(
+          ota.unreachable
+              ? "Check the scooter's internet connection"
+              : checked == null
+                  ? 'Not checked yet'
+                  : 'Last checked $checked',
+          style: DashText.caption(16),
+        ),
         const SizedBox(height: 14),
         _BigButton(
           ota.checking ? 'Checking' : 'Check now',
@@ -230,6 +240,7 @@ class _UpToDate extends ConsumerWidget {
                   ref.read(otaProvider.notifier).check();
                 },
         ),
+        if (ota.unreachable) const _GetCompanion(),
       ],
     );
   }
@@ -415,7 +426,31 @@ class _Failed extends ConsumerWidget {
             ref.read(otaProvider.notifier).retry();
           },
         ),
+        const _GetCompanion(),
       ],
+    );
+  }
+}
+
+/// When GitHub can't be reached or the update failed: the phone app can
+/// send the update over the scooter's own network instead.
+class _GetCompanion extends ConsumerWidget {
+  const _GetCompanion();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Center(
+        child: TextButtonLink(
+          'Send it from your phone instead',
+          key: const ValueKey('ota-get-companion'),
+          onTap: () {
+            uiTap('ota-get-companion');
+            ref.read(qrCardProvider.notifier).companionApp(from: 'update-failed');
+          },
+        ),
+      ),
     );
   }
 }

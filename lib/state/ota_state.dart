@@ -107,6 +107,7 @@ class OtaData {
     this.seenBuild = 0,
     this.skippedBuild = 0,
     this.pendingBuild = 0,
+    this.unreachable = false,
   });
 
   final OtaStatus status;
@@ -133,6 +134,10 @@ class OtaData {
   /// running stably; 0 when none.
   final int pendingBuild;
 
+  /// The last check, automatic or asked for, did not reach GitHub. Not
+  /// "up to date": nothing is known. Cleared by the next one that does.
+  final bool unreachable;
+
   String get versionName => release?.version ?? '';
 
   /// The bell and the dot on the Updates row: a release the rider has
@@ -157,6 +162,7 @@ class OtaData {
     int? seenBuild,
     int? skippedBuild,
     int? pendingBuild,
+    bool? unreachable,
   }) =>
       OtaData(
         status: status ?? this.status,
@@ -169,6 +175,7 @@ class OtaData {
         seenBuild: seenBuild ?? this.seenBuild,
         skippedBuild: skippedBuild ?? this.skippedBuild,
         pendingBuild: pendingBuild ?? this.pendingBuild,
+        unreachable: unreachable ?? this.unreachable,
       );
 }
 
@@ -415,7 +422,7 @@ class OtaNotifier extends Notifier<OtaData> {
       at = TrustedClock.now().millisecondsSinceEpoch;
       PrefsService.setInt(PrefsKeys.updateCheckedAt, at);
     }
-    state = state.copyWith(checking: false, checkedAtMs: () => at);
+    state = state.copyWith(checking: false, checkedAtMs: () => at, unreachable: !answered);
     if (!auto) {
       _toast(
         !answered

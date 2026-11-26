@@ -221,6 +221,44 @@ void main() {
     expect(find.textContaining('build 120'), findsWidgets);
     await tester.pump(const Duration(seconds: 12));
   });
+  testWidgets('a check that cannot reach GitHub does not say up to date, and offers the companion app', (tester) async {
+    await pumpApp(tester);
+    platform.checkStatus = 0;
+    ota().check(auto: true);
+    await settle(tester);
+    await openUpdates(tester);
+    expect(find.text('OpenDash is up to date'), findsNothing);
+    expect(find.text("Couldn't reach GitHub"), findsOneWidget);
+    expect(find.text("Check the scooter's internet connection"), findsOneWidget);
+    expect(find.text('Not checked yet'), findsNothing, reason: 'it was checked; GitHub did not answer');
+    expect(k('ota-check'), findsOneWidget, reason: 'it can be tried again');
+    await tap(tester, 'ota-get-companion');
+    expect(container.read(qrCardProvider)?.id, 'companion');
+    container.read(qrCardProvider.notifier).close();
+    await settle(tester);
+    // GitHub answers again: the card says what it found.
+    platform.checkStatus = 200;
+    ota().check();
+    await settle(tester);
+    expect(find.text("Couldn't reach GitHub"), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('an update that failed also offers the companion app', (tester) async {
+    await pumpApp(tester);
+    platform.downloadedSigner = 'someone-else';
+    ota().check();
+    await settle(tester);
+    ota().startDownload();
+    await tester.pump(const Duration(seconds: 4));
+    await settle(tester);
+    await openUpdates(tester);
+    expect(find.text('The update was not installed'), findsOneWidget);
+    await tap(tester, 'ota-get-companion');
+    expect(container.read(qrCardProvider)?.id, 'companion');
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('Updates offers the companion app as a QR code', (tester) async {
     await pumpApp(tester);
     await openUpdates(tester);
