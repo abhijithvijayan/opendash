@@ -10,6 +10,7 @@ import '../widgets.dart';
 import '../../../theme/tokens.dart';
 import 'theme_picker.dart';
 import '../../../state/auto_brightness.dart';
+import '../../../state/riding_settings.dart';
 
 class DisplaySection extends ConsumerWidget {
   const DisplaySection({super.key});
@@ -17,6 +18,7 @@ class DisplaySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = ref.watch(brightnessProvider);
+    final autoBrightnessOn = ref.watch(ridingSettingsProvider.select((r) => r.isOn(RidingFeature.autoBrightness)));
     final auto = ref.watch(autoDarkModeProvider);
     final use24 = ref.watch(use24HourProvider);
     final dateOrder = ref.watch(dateOrderProvider);
@@ -37,6 +39,15 @@ class DisplaySection extends ConsumerWidget {
             ref.read(autoBrightnessProvider.notifier).learn(x.round());
           },
         ),
+        if (autoBrightnessOn)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'Auto brightness is on: the screen adjusts through the day. Drag to set your level for now; turn it off in Riding.',
+              key: const ValueKey('auto-brightness-note'),
+              style: DashText.caption(14, color: DashColors.ash),
+            ),
+          ),
         const SettingsDivider(),
         const SectionHeader('Theme'),
         const ThemeCards(),
