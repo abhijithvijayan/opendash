@@ -228,8 +228,7 @@ abstract final class HhmisCmd {
     RidingFeature.motorCutOff: 'MOTOR_CUTOFF_TOGGLE',
     RidingFeature.vacationMode: 'VACATION_MODE_TOGGLE',
     RidingFeature.takeMeHome: 'TAKE_ME_HOME_TOGGLE',
-    // 1 is SIDE_STAND_ENABLE and 0 SIDE_STAND_DISABLE in both stock apps
-    // (Session 50 U03). What "disabled" does on the VCU is still unproven.
+    // Inverted: 1 is SIDE_STAND_ENABLE, the bypass; see [setFeature].
     RidingFeature.sideStandCutOff: 'SIDE_STAND_TOGGLE',
     RidingFeature.predictedRange: 'PREDICT_RANGE_TOGGLE',
   };
@@ -1225,10 +1224,9 @@ class AidlVehicleNotifier extends VehicleNotifier {
       logEvent('hhmis', 'feature_ack', {'feature': feature.name, 'ok': ok});
       featureAckHandler?.call(feature, ok);
     }
-    // Not mirrored (`hhmis_mapping.dart`); logged to read what the VCU
-    // keeps before and after a side-stand toggle.
+    // What HHMIS keeps for the side stand, for the polarity check.
     final standPersist = delta['BOOL_SIDE_STAND_PERSIST_TOGGLE'];
-    if (standPersist is bool) logEvent('hhmis', 'side_stand_persist', {'on': standPersist});
+    if (standPersist is bool) logEvent('hhmis', 'side_stand_persist', {'bypass': standPersist});
     final music = delta['INT_BT_MUSIC_COMMAND'];
     if (music is int) _musicCommand(music);
     final callHandle = delta['BOOL_BT_CALL_HANDLE_REQUEST'];
@@ -3016,11 +3014,13 @@ class AidlVehicleNotifier extends VehicleNotifier {
     if (cmd == null) return;
     // Never switch on something the scooter says it lacks,
     // or that its software has no command for.
-    if (on && !capabilities.feature(feature)) {
+    // The side-stand row is the sensor; its command switches the bypass.
+    final value = (feature == RidingFeature.sideStandCutOff) != on ? 1 : 0;
+    if (value == 1 && !capabilities.feature(feature)) {
       logEvent('hhmis', 'feature_blocked', {'feature': feature.name, 'value': 1});
       return;
     }
-    _int(cmd, on ? 1 : 0);
+    _int(cmd, value);
   }
 
   @override

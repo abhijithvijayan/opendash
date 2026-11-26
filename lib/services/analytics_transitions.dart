@@ -16,9 +16,17 @@ import 'analytics_logger.dart';
 /// by listening on the providers rather than patching each notifier, so a
 /// widget rebuild can never double-fire. Installed once per container.
 void installAnalyticsTransitions(ProviderContainer c) {
+  bool standSensor() => c.read(ridingSettingsProvider).isOn(RidingFeature.sideStandCutOff);
   c.listen(vehicleProvider.select((v) => v.vehicleState), (prev, next) {
     final v = c.read(vehicleProvider);
-    logEvent('state', 'vehicle_state', {'from': prev?.name, 'to': next.name, 'speed': v.speed, 'locked': v.locked});
+    logEvent('state', 'vehicle_state', {
+      'from': prev?.name,
+      'to': next.name,
+      'speed': v.speed,
+      'locked': v.locked,
+      'stand': v.sideStand,
+      'stand_sensor': standSensor(),
+    });
   });
   c.listen(vehicleProvider.select((v) => v.lockState), (prev, next) {
     logEvent('state', 'lock_change', {'from': prev, 'to': next});
@@ -31,7 +39,10 @@ void installAnalyticsTransitions(ProviderContainer c) {
   c.listen(vehicleProvider.select((v) => (v.isCharging, v.chargingState)), (_, next) {
     logEvent('state', 'charging', {'on': next.$1, 'state': next.$2.name});
   });
-  c.listen(vehicleProvider.select((v) => v.sideStand), (_, down) => logEvent('state', 'side_stand', {'down': down}));
+  c.listen(vehicleProvider.select((v) => v.sideStand), (_, down) {
+    final v = c.read(vehicleProvider);
+    logEvent('state', 'side_stand', {'down': down, 'state': v.vehicleState.name, 'speed': v.speed, 'stand_sensor': standSensor()});
+  });
   c.listen(vehicleProvider.select((v) => v.hhmisConnected), (_, up) => logEvent('state', 'hhmis_connected', {'up': up}));
 
   var booted = false;

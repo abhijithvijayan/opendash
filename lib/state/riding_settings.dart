@@ -325,6 +325,9 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
         logSettingsChange('riding.${feature.name}.mirror', state.isOn(feature), entry.value);
         state = state.copyWith(features: {...state.features, feature: entry.value});
         PrefsService.setBool(PrefsKeys.ridingFeature(feature.name), entry.value);
+        if (feature == RidingFeature.sideStandCutOff) {
+          entry.value ? PrefsService.remove(PrefsKeys.standBypassConfirmed) : PrefsService.setBool(PrefsKeys.standBypassConfirmed, true);
+        }
       }
     });
     final settings = RidingSettings.fromPrefs();
