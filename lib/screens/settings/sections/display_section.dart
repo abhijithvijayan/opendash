@@ -43,10 +43,9 @@ class DisplaySection extends ConsumerWidget {
         const SizedBox(height: 24),
         const SectionHeader('Custom accents'),
         const AccentPicker(),
-        const SizedBox(height: 8),
-        Text('Auto theme', style: DashText.caption(16)),
-        const SizedBox(height: 4),
-        Text('Light during the day, your dark theme at night', style: DashText.caption(14)),
+        const SizedBox(height: 24),
+        const SectionHeader('Auto theme'),
+        Text('Your light theme by day, your dark theme at night', style: DashText.caption(14)),
         const SizedBox(height: 8),
         ChipRow<AutoThemeMode>(
           key: const ValueKey('auto-theme-mode'),
