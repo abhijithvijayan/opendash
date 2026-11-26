@@ -17,6 +17,10 @@ const BITS = 22;
 const REPO = 'abhijithvijayan/opendash';
 const WEEK = /^\d{4}-W\d{2}$/;
 const TEXT = /^[\w .()+-]{0,40}$/;
+
+// The head unit's hardware and firmware (OpenDash 0.3.5 on): the same on
+// every unit of one model and firmware. Optional, '' when not sent.
+export const HARDWARE = ['screen', 'density', 'density_default', 'maker', 'device', 'board', 'soc', 'abi', 'ram_gb', 'fw', 'patch'];
 const DAY = 86400000;
 
 function text(v) {
@@ -76,6 +80,7 @@ export async function check(raw, now) {
     stock: text(b.stock),
     // Optional: apps before it was added don't send it.
     android: b.android === undefined ? '' : text(b.android),
+    ...Object.fromEntries(HARDWARE.map((k) => [k, b[k] === undefined ? '' : text(b[k])])),
   };
   // No stock service version: the app ran where there is no stock service,
   // a phone and not a scooter (apps before 0.3.3 sent these).
@@ -96,10 +101,11 @@ async function ping(request, env) {
   // changed once, after forks had copied the old one.
   const via = text(env.VIA ?? '') ?? '';
   try {
+    const columns = ['week', 'new', 'app', 'build', 'gen', 'model', 'moveos', 'stock', 'android', ...HARDWARE];
     await env.DB.prepare(
-      'INSERT INTO pings (week, new, app, build, gen, model, moveos, stock, android, country, proof, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO pings (${columns.join(', ')}, country, proof, via) VALUES (${columns.map(() => '?').join(', ')}, ?, ?, ?)`,
     )
-      .bind(row.week, row.new, row.app, row.build, row.gen, row.model, row.moveos, row.stock, row.android, country, row.proof, via)
+      .bind(...columns.map((c) => row[c]), country, row.proof, via)
       .run();
   } catch (e) {
     if (String(e).includes('UNIQUE')) return new Response(null, { status: 409 });
@@ -156,6 +162,9 @@ async function stats(request, env) {
       countries: await all(`SELECT country, COUNT(*) AS n FROM pings WHERE ${latest} GROUP BY country ORDER BY n DESC`),
       // legacy: the address in apps before 0.3.4, which forks copied.
       via: await all(`SELECT via, COUNT(*) AS n FROM pings WHERE ${latest} GROUP BY via ORDER BY n DESC`),
+      hardware: await all(
+        `SELECT gen, ${HARDWARE.join(', ')}, COUNT(*) AS n FROM pings WHERE ${latest} GROUP BY gen, ${HARDWARE.join(', ')} ORDER BY n DESC`,
+      ),
     },
   });
 }

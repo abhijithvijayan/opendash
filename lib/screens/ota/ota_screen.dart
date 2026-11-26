@@ -153,7 +153,7 @@ class _OpenDashCard extends ConsumerWidget {
           ToggleRow(
             key: const ValueKey('usage-ping'),
             label: 'Count this install',
-            caption: 'Once a week: OpenDash version, scooter model and software. No ID, nothing about you',
+            caption: 'Once a week: OpenDash version, scooter model, software and head unit hardware. No ID, nothing about you',
             value: ref.watch(usagePingProvider),
             onChanged: ref.read(usagePingProvider.notifier).set,
           ),

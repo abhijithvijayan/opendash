@@ -38,12 +38,44 @@ void main() {
         software: const StockIdentity(version: '4.6.14', source: StockIdentity.sourceRead, name: 'gen1-moveos4-hhmis-4.6.14'),
         android: '10',
       );
-      expect(p.keys.toSet(), {'v', 'week', 'new', 'app', 'build', 'gen', 'model', 'moveos', 'stock', 'android'});
+      expect(p.keys.toSet(), {'v', 'week', 'new', 'app', 'build', 'gen', 'model', 'moveos', 'stock', 'android', ...hardwareKeys});
       expect(p, containsPair('android', '10'));
       expect(p, containsPair('gen', '1'));
       expect(p, containsPair('model', 'S1 Pro'));
       expect(p, containsPair('build', 1612));
       expect(p, containsPair('stock', '4.6.14'));
+    });
+
+    test('the head unit\'s hardware: what every unit of a model and firmware shares, nothing that tells one apart', () {
+      final h = hardwareFacts({
+        'screen_px': '1280x768',
+        'density': '236',
+        'density_default': '480',
+        'manufacturer': 'QUALCOMM',
+        'model': 'Ola HU',
+        'board': 'msmnile',
+        'hardware': 'qcom',
+        'abis': 'arm64-v8a,armeabi-v7a,armeabi',
+        'ram_mb': '3712',
+        'build_id': 'QKQ1.200830.002 release/keys:user, a very long firmware build name',
+        'security_patch': '2021-10-05',
+        'serial': 'ABC123',
+        'stock_packages': 'com.olaelectric.hmiclient',
+      });
+      expect(h, {
+        'screen': '1280x768',
+        'density': '236',
+        'density_default': '480',
+        'maker': 'QUALCOMM',
+        'device': 'Ola HU',
+        'board': 'msmnile',
+        'soc': 'qcom',
+        'abi': 'arm64-v8a',
+        'ram_gb': '4',
+        'fw': 'QKQ1.200830.002 release_keys_user_ a ver',
+        'patch': '2021-10-05',
+      });
+      expect(hardwareFacts({}).values.toSet(), {''}, reason: 'unknown is empty, never left out');
     });
 
     test('nothing about the scooter before the stock service has spoken', () {

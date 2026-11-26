@@ -277,10 +277,11 @@ The log is written so that it can be shared: identifiers such as the VIN, serial
 - **Anonymous install count.** So we know how many scooters run OpenDash and which versions are still in use, OpenDash sends one small message at most once a week to a server of ours ([`server/usage`](server/usage)). This is the whole message:
 
   ```json
-  {"v":2,"week":"2026-W48","new":false,"app":"0.3.0","build":30000,"gen":"1","model":"S1 Pro","moveos":"4.6.14","stock":"4.6.14","android":"10"}
+  {"v":2,"week":"2026-W48","new":false,"app":"0.3.5","build":30500,"gen":"1","model":"S1 Pro","moveos":"4.6.14","stock":"4.6.14","android":"10",
+   "screen":"1280x768","density":"236","density_default":"480","maker":"…","device":"…","board":"…","soc":"…","abi":"arm64-v8a","ram_gb":"4","fw":"…","patch":"2021-10-05"}
   ```
 
-  `new` is true only on the first message after an install. The app also attaches a few seconds' worth of proof of work to each message, so that faking many messages costs real computing time. There is no ID of any kind, so two messages cannot be told to come from the same scooter. The server keeps the country the message came from and does not keep your IP address. Turn it off in **Settings → Updates → Count this install**; once off, nothing is sent.
+  `new` is true only on the first message after an install. The second line describes the head unit: its screen, its make, board and chip as Android reports them, memory rounded to whole gigabytes, and its firmware build and security patch. These are the same on every head unit of one model and firmware, so they show when a new variant appears and nothing about which scooter sent them. No serial number, MAC address or other per-unit value is read. The app also attaches a few seconds' worth of proof of work to each message, so that faking many messages costs real computing time. There is no ID of any kind, so two messages cannot be told to come from the same scooter. The server keeps the country the message came from and does not keep your IP address. Turn it off in **Settings → Updates → Count this install**; once off, nothing is sent.
 - Apart from that message, OpenDash only talks to GitHub (to check for its own updates and those of the apps it offers) and uses Cloudflare's public DNS to look up addresses when the mobile network's own DNS fails. None of these requests carries anything about the rider or the scooter.
 - The stock software behind the dashboard keeps reporting to the manufacturer exactly as it does with the stock dashboard. OpenDash neither adds to nor blocks that. If you install [OTA Shield](#scooter-firmware-updates-and-ota-shield), that app reads the scooter's traffic to the manufacturer and drops firmware update messages; OpenDash only reads its status.
 

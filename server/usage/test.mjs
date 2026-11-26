@@ -70,3 +70,19 @@ test('a stored ping says which address it came in on', async () => {
   assert.equal(bound.length, 1);
   assert.equal(bound[0].at(-1), 'v2');
 });
+
+test('the head unit hardware is kept, and an app too old to send it still counts', async () => {
+  const hw = {
+    screen: '1280x768', density: '236', density_default: '480', maker: 'QUALCOMM', device: 'Ola HU',
+    board: 'msmnile', soc: 'qcom', abi: 'arm64-v8a', ram_gb: '4', fw: 'QKQ1.200830.002 release-keys', patch: '2021-10-05',
+  };
+  const ping = payload(hw);
+  const row = await check(JSON.stringify({ ping, n: solve(ping, 22) }), NOW);
+  for (const [k, v] of Object.entries(hw)) assert.equal(row[k], v, k);
+  const old = payload();
+  const oldRow = await check(JSON.stringify({ ping: old, n: solve(old, 22) }), NOW);
+  assert.equal(oldRow.screen, '');
+  assert.equal(oldRow.fw, '');
+  const odd = payload({ ...hw, fw: 'a/b' });
+  assert.equal(await check(JSON.stringify({ ping: odd, n: solve(odd, 22) }), NOW), null, 'the app cleans these; one that does not is not this app');
+});

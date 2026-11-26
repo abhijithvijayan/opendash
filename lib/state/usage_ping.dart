@@ -93,12 +93,14 @@ class UsagePing extends Notifier<bool> {
       return;
     }
     final counted = PrefsService.getBool(PrefsKeys.usagePingCounted, false);
+    final device = ref.read(platformServiceProvider).deviceInfo();
     final body = jsonEncode(usagePayload(
       week: week,
       isNew: !counted,
       v: ref.read(vehicleProvider),
       software: ref.read(scooterCapabilitiesProvider).software,
-      android: ref.read(platformServiceProvider).deviceInfo()['release'] ?? '',
+      android: device['release'] ?? '',
+      device: device,
     ));
     _sending = true;
     final status = await ref.read(platformServiceProvider).usagePing(usagePingUrl, body);
@@ -125,6 +127,7 @@ Map<String, Object?> usagePayload({
   required VehicleData v,
   StockIdentity? software,
   required String android,
+  Map<String, String> device = const {},
 }) {
   final known = v.hhmisBacked;
   return {
@@ -138,6 +141,39 @@ Map<String, Object?> usagePayload({
     'moveos': known ? v.moveOsVersion : '',
     'stock': software?.version ?? '',
     'android': android,
+    ...hardwareFacts(device),
+  };
+}
+
+/// The fields [hardwareFacts] adds to the ping.
+const hardwareKeys = ['screen', 'density', 'density_default', 'maker', 'device', 'board', 'soc', 'abi', 'ram_gb', 'fw', 'patch'];
+
+/// The head unit's hardware and firmware, as the Android build reports it:
+/// the same on every unit of one model and firmware, so a different panel,
+/// board or firmware can be told apart and nothing else. No serial, MAC or
+/// any other per-unit value is read. Each is kept to what the server takes
+/// (letters, digits, space and `_ . ( ) + -`, at most 40), so an odd build
+/// name can't get the whole ping refused. Unknown is ''.
+Map<String, String> hardwareFacts(Map<String, String> device) {
+  String clean(String? v) {
+    final s = (v ?? '').replaceAll(RegExp(r'[^\w .()+-]'), '_');
+    return s.length > 40 ? s.substring(0, 40) : s;
+  }
+
+  final ramMb = int.tryParse(device['ram_mb'] ?? '');
+  return {
+    'screen': clean(device['screen_px']),
+    'density': clean(device['density']),
+    'density_default': clean(device['density_default']),
+    'maker': clean(device['manufacturer']),
+    'device': clean(device['model']),
+    'board': clean(device['board']),
+    'soc': clean(device['hardware']),
+    'abi': clean((device['abis'] ?? '').split(',').first),
+    // Rounded: the exact figure differs a little from unit to unit.
+    'ram_gb': ramMb == null ? '' : '${(ramMb / 1024).round()}',
+    'fw': clean(device['build_id']),
+    'patch': clean(device['security_patch']),
   };
 }
 
