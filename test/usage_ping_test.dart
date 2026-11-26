@@ -72,10 +72,12 @@ void main() {
         'soc': 'qcom',
         'abi': 'arm64-v8a',
         'ram_gb': '4',
-        'fw': 'QKQ1.200830.002 release_keys_user_ a ver',
+        'fw': 'QKQ1.200830.002 release_keys_user_ a very long firmware build name',
         'patch': '2021-10-05',
       });
       expect(hardwareFacts({}).values.toSet(), {''}, reason: 'unknown is empty, never left out');
+      expect(hardwareFacts({'screen_px': '768x1280'})['screen'], '1280x768', reason: 'the panel, whichever way up it was read');
+      expect(hardwareFacts({'build_id': 'x' * 100})['fw']!.length, 80, reason: 'firmware names run long; the end is the build');
     });
 
     test('nothing about the scooter before the stock service has spoken', () {

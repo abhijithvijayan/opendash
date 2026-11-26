@@ -86,3 +86,13 @@ test('the head unit hardware is kept, and an app too old to send it still counts
   const odd = payload({ ...hw, fw: 'a/b' });
   assert.equal(await check(JSON.stringify({ ping: odd, n: solve(odd, 22) }), NOW), null, 'the app cleans these; one that does not is not this app');
 });
+
+test('a firmware build name may be up to 80 characters; the other fields 40', async () => {
+  const fw = 'sdk_phone64_arm64-userdebug 10 QSR1.211112.011 7955567 test-keys';
+  const ok = payload({ fw });
+  assert.equal((await check(JSON.stringify({ ping: ok, n: solve(ok, 22) }), NOW)).fw, fw);
+  const long = payload({ fw: 'x'.repeat(81) });
+  assert.equal(await check(JSON.stringify({ ping: long, n: solve(long, 22) }), NOW), null);
+  const board = payload({ board: 'x'.repeat(41) });
+  assert.equal(await check(JSON.stringify({ ping: board, n: solve(board, 22) }), NOW), null);
+});

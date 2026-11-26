@@ -152,17 +152,26 @@ const hardwareKeys = ['screen', 'density', 'density_default', 'maker', 'device',
 /// the same on every unit of one model and firmware, so a different panel,
 /// board or firmware can be told apart and nothing else. No serial, MAC or
 /// any other per-unit value is read. Each is kept to what the server takes
-/// (letters, digits, space and `_ . ( ) + -`, at most 40), so an odd build
-/// name can't get the whole ping refused. Unknown is ''.
+/// (letters, digits, space and `_ . ( ) + -`, at most 40, the firmware
+/// build 80), so an odd build name can't get the whole ping refused.
+/// Unknown is ''.
 Map<String, String> hardwareFacts(Map<String, String> device) {
-  String clean(String? v) {
+  String clean(String? v, [int max = 40]) {
     final s = (v ?? '').replaceAll(RegExp(r'[^\w .()+-]'), '_');
-    return s.length > 40 ? s.substring(0, 40) : s;
+    return s.length > max ? s.substring(0, max) : s;
+  }
+
+  // The panel, long side first: Android reports it the way up it is held.
+  String screen(String? v) {
+    final m = RegExp(r'^(\d+)x(\d+)$').firstMatch(v ?? '');
+    if (m == null) return clean(v);
+    final a = int.parse(m[1]!), b = int.parse(m[2]!);
+    return a >= b ? '${a}x$b' : '${b}x$a';
   }
 
   final ramMb = int.tryParse(device['ram_mb'] ?? '');
   return {
-    'screen': clean(device['screen_px']),
+    'screen': screen(device['screen_px']),
     'density': clean(device['density']),
     'density_default': clean(device['density_default']),
     'maker': clean(device['manufacturer']),
@@ -172,7 +181,8 @@ Map<String, String> hardwareFacts(Map<String, String> device) {
     'abi': clean((device['abis'] ?? '').split(',').first),
     // Rounded: the exact figure differs a little from unit to unit.
     'ram_gb': ramMb == null ? '' : '${(ramMb / 1024).round()}',
-    'fw': clean(device['build_id']),
+    // Firmware names run long, and the end is the most specific part.
+    'fw': clean(device['build_id'], 80),
     'patch': clean(device['security_patch']),
   };
 }

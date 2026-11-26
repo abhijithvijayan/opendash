@@ -23,8 +23,10 @@ const TEXT = /^[\w .()+-]{0,40}$/;
 export const HARDWARE = ['screen', 'density', 'density_default', 'maker', 'device', 'board', 'soc', 'abi', 'ram_gb', 'fw', 'patch'];
 const DAY = 86400000;
 
-function text(v) {
-  return typeof v === 'string' && TEXT.test(v) ? v : null;
+const LONG = /^[\w .()+-]{0,80}$/;
+
+function text(v, pattern = TEXT) {
+  return typeof v === 'string' && pattern.test(v) ? v : null;
 }
 
 // ISO 8601 week of the UTC date of [ms], as 2026-W48.
@@ -80,7 +82,8 @@ export async function check(raw, now) {
     stock: text(b.stock),
     // Optional: apps before it was added don't send it.
     android: b.android === undefined ? '' : text(b.android),
-    ...Object.fromEntries(HARDWARE.map((k) => [k, b[k] === undefined ? '' : text(b[k])])),
+    // The firmware build name runs long; the end is the most specific part.
+    ...Object.fromEntries(HARDWARE.map((k) => [k, b[k] === undefined ? '' : text(b[k], k === 'fw' ? LONG : TEXT)])),
   };
   // No stock service version: the app ran where there is no stock service,
   // a phone and not a scooter (apps before 0.3.3 sent these).
