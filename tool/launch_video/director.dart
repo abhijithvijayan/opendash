@@ -40,6 +40,8 @@ class Director {
 
   bool get light => container.read(shownThemeProvider).isLight;
 
+  void clearToast() => container.read(toastProvider.notifier).dismiss();
+
   void theme(DashTheme t) => container.read(themeProvider.notifier).setTheme(t);
 
   void drive(double speed, double kw) {

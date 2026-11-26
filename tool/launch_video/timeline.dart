@@ -10,6 +10,7 @@ import 'package:opendash/state/control_panel.dart';
 import 'package:opendash/state/crash_recovery.dart';
 import 'package:opendash/state/dash_island.dart';
 import 'package:opendash/state/widget_panel_state.dart';
+import 'package:opendash/state/theme_state.dart';
 import 'package:opendash/theme/dash_theme.dart';
 
 import 'director.dart';
@@ -230,11 +231,33 @@ final timeline = <Scene>[
     },
   ),
   Scene(
+    'theme-gallery',
+    12 * beat,
+    title: 'Nine themes',
+    subtitle: 'Darks and lights to pick from in Settings',
+    words: [for (final t in DashTheme.builtIn) t.name],
+    wordAt: [for (var i = 0; i < DashTheme.builtIn.length; i++) i * 12 * beat / DashTheme.builtIn.length],
+    enter: (d) async {
+      d.theme(DashTheme.builtIn.first);
+      await d.ride(mode: DriveMode.sport);
+    },
+    tick: (d, t) {
+      final i = (t / (12 * beat / DashTheme.builtIn.length)).floor().clamp(0, DashTheme.builtIn.length - 1);
+      final want = DashTheme.builtIn[i];
+      if (d.container.read(shownThemeProvider).name != want.name) d.theme(want);
+      d.clearToast();
+      d.drive(_cruising(t, 48), 2.6 + 0.6 * math.sin(t * 1.5));
+    },
+  ),
+  Scene(
     'range',
     10 * beat,
     title: 'True Range',
     subtitle: 'Learned from your own rides. Tap it to compare with the scooter\'s own figure',
-    enter: (d) => d.ride(mode: DriveMode.normal, soc: 76),
+    enter: (d) async {
+      d.theme(DashTheme.dark);
+      await d.ride(mode: DriveMode.normal, soc: 76);
+    },
     tick: (d, t) async {
       d.drive(_cruising(t, 46), 2.0 + 0.5 * math.sin(t * 1.4));
       if (t >= 1.6 && d.once('range-tap')) await d.tapKey('range');

@@ -110,6 +110,10 @@ class VideoFrame extends StatelessWidget {
                             const SizedBox(height: 10),
                             Text(scene.subtitle!, style: _wide(26, color: _muted, weight: 450, width: 100)),
                           ],
+                          if (scene.words.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(scene.words[s.step], style: _wide(28, color: _accent, weight: 650, width: 100)),
+                          ],
                           if (scene.footnote != null) ...[
                             const SizedBox(height: 8),
                             Text(scene.footnote!, style: _wide(22, color: _muted.withValues(alpha: 0.85), weight: 400, width: 100)),
@@ -421,6 +425,10 @@ class ReelFrame extends StatelessWidget {
                           ] else if (scene.subtitle != null) ...[
                             const SizedBox(height: 18),
                             Text(scene.subtitle!, textAlign: TextAlign.center, style: _wide(36, color: _muted, weight: 450, width: 100).copyWith(height: 1.25)),
+                          ],
+                          if (scene.kind == SceneKind.dashWithCaption && scene.words.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Text(scene.words[s.step], textAlign: TextAlign.center, style: _wide(40, color: _accent, weight: 650, width: 100)),
                           ],
                           if (scene.footnote != null) ...[
                             const SizedBox(height: 12),

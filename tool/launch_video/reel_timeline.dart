@@ -19,6 +19,7 @@ final reelTimeline = <Scene>[
   ),
   sceneById('reverse-cruise').recut(7 * beat, subtitle: 'Drawn right on the dial'),
   sceneById('themes').recut(5 * beat, title: 'Light by day, dark by night', subtitle: 'Switches by itself, with auto brightness'),
+  sceneById('theme-gallery').recut(9 * beat, subtitle: 'Darks and lights to pick from'),
   sceneById('range').recut(5 * beat, subtitle: 'A range learned from your own rides'),
   sceneById('diagnostics').recut(5 * beat, title: 'Live diagnostics', subtitle: 'Every cell and temperature, on the scooter itself'),
   sceneById('charging').recut(4 * beat, title: 'Charging, in full', subtitle: 'Power, energy, time to full'),
