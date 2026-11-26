@@ -209,8 +209,11 @@ class DashTheme {
     hyper: Color(0xFF9333EA),
     charging: Color(0xFF0891B2),
     parked: Color(0xFF7B8CA3),
-    critical: Color(0xFFDC2626),
-    warning: Color(0xFFD97706),
+    // Deeper than the stock-Light alert hues: amber/red on this cooler frost
+    // ground otherwise dip below the stock-Light contrast floor (design-system
+    // alert legibility — turn-signal amber and fault red).
+    critical: Color(0xFFC81E1E),
+    warning: Color(0xFFB45309),
   );
 
   static const builtIn = [
