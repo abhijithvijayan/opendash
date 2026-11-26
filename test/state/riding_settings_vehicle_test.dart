@@ -422,6 +422,26 @@ void main() {
     });
   });
 
+  group('side stand', () {
+    test('a bypass the scooter keeps shows here, is remembered, and nothing goes back', () async {
+      SharedPreferences.setMockInitialValues({});
+      await PrefsService.init();
+      addTearDown(PrefsService.resetForTest);
+      final h = _Harness();
+      final before = h.calls.length;
+      h.hhmis({'BOOL_SIDE_STAND_PERSIST_TOGGLE': true});
+      await Future<void>.delayed(Duration.zero);
+      expect(h.settings.isOn(RidingFeature.sideStandCutOff), isFalse);
+      expect(RidingSettings.fromPrefs().isOn(RidingFeature.sideStandCutOff), isFalse, reason: 'survives a restart');
+      expect(AnalyticsLogger.instance.recent('hhmis', 'side_stand_persist').last['data'], {'bypass': true});
+      h.hhmis({'BOOL_SIDE_STAND_PERSIST_TOGGLE': false});
+      await Future<void>.delayed(Duration.zero);
+      expect(h.settings.isOn(RidingFeature.sideStandCutOff), isTrue);
+      expect(h.calls.length, before);
+      h.dispose();
+    });
+  });
+
   group('regen (echo-driven, in-flight guard)', () {
     test('the selector moves on REGEN_SETTINGS_UPDATE, and a second pick waits for it', () {
       fakeAsync((async) {

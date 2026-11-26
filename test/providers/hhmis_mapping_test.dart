@@ -603,8 +603,12 @@ void main() {
       expect(out.featureMirror['predictedRange'], isTrue);
       expect(out.featureMirror['takeMeHome'], isFalse);
       expect(out.featureMirror['autoTurnOff'], isTrue, reason: 'ClientCmd 51, auto indicator turn-off');
-      expect(out.featureMirror['sideStandCutOff'], isNull,
-          reason: 'not mirrored: its polarity is unknown, and false on a MoveOS 5 scooter whose sensor worked');
+    });
+
+    test('BOOL_SIDE_STAND_PERSIST_TOGGLE is the bypass: the sensor mirrors its inverse', () {
+      expect(apply({'BOOL_SIDE_STAND_PERSIST_TOGGLE': false}).featureMirror['sideStandCutOff'], isTrue,
+          reason: '2026-11-26 Gen 1 5.0.2: false all day while the stand cut drive');
+      expect(apply({'BOOL_SIDE_STAND_PERSIST_TOGGLE': true}).featureMirror['sideStandCutOff'], isFalse);
     });
 
     group('feature availability', () {

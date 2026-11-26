@@ -243,15 +243,14 @@ VehicleData _applyOne(VehicleData v, String key, Object? raw, void Function(Stri
     // ClientCmd 51 (auto indicator turn-off) is RidingFeature.autoTurnOff.
     case 'BOOL_AUTO_INDICATOR_PERSIST_TURNOFF_TOGGLE_STAT':
       return _mirror(v, raw, 'autoTurnOff');
-    // No `_STAT` suffix on this one in the HHMIS enum.
-    //
-    // Not mirrored. Its polarity is unknown and OpenDash's bypass is
-    // its own, never sent. A MoveOS 5 scooter once reported false
-    // while its sensor plainly worked (stand down cut the motor to PARK);
-    // mirrored, it showed "Side stand sensor bypassed" and silenced
-    // OpenDash's own side-stand warnings and auto-park.
+    // No `_STAT` suffix on this one in the HHMIS enum. True is the
+    // bypass (SIDE_STAND_ENABLE, 0x6BC 5B), so the sensor is its inverse.
+    // 2026-11-26 Gen 1 5.0.2: false all day, HHMIS sent 5A at each unlock,
+    // and the stand still cut drive. Stock without the override flag
+    // always sends 0 (Session 38).
     case 'BOOL_SIDE_STAND_PERSIST_TOGGLE':
-      return v;
+      final bypass = _bool(raw);
+      return bypass == null ? v : _mirror(v, !bypass, 'sideStandCutOff');
     // Smart-headlight persisted state arrives as
     // INT_SMART_HEADLIGHT_PERSIST_BUTTON_STAT. 1 = on.
     case 'INT_SMART_HEADLIGHT_PERSIST_BUTTON_STAT':
