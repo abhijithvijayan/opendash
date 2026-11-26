@@ -199,15 +199,17 @@ class DashTheme {
     warning: Color(0xFFB45309),
   );
 
+  // Grouped by appearance: the dark themes first, then the light ones, so
+  // the picker never scatters a light card among the darks.
   static const builtIn = [
     dark,
     midnight,
     ember,
-    light,
     carbonGt,
     neonPulse,
     emeraldStealth,
     crimsonTrack,
+    light,
     glacierLight,
   ];
 
