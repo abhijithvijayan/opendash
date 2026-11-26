@@ -75,14 +75,28 @@ class DisplaySection extends ConsumerWidget {
         const AccentPicker(),
         const SizedBox(height: 24),
         const SectionHeader('Auto theme'),
-        Text('Your light theme by day, your dark theme at night', style: DashText.caption(14)),
-        const SizedBox(height: 8),
         ChipRow<AutoThemeMode>(
           key: const ValueKey('auto-theme-mode'),
           options: AutoThemeMode.values,
           value: auto.mode,
           label: (m) => m.label,
           onSelected: ref.read(autoDarkModeProvider.notifier).setMode,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 4),
+          child: Text(
+            switch (auto.mode) {
+              AutoThemeMode.off => 'The theme you pick stays until you change it.',
+              AutoThemeMode.timeBased =>
+                'At "Light after" the dash switches to the last light theme you picked, at "Dark after" to the last dark one. '
+                    'A theme you pick yourself stays until the next switch.',
+              AutoThemeMode.ambientSensor =>
+                "The scooter's light sensor decides: the last light theme you picked in daylight, the last dark one when it gets dark. "
+                    'A theme you pick yourself stays until the light changes.',
+            },
+            key: const ValueKey('auto-theme-description'),
+            style: DashText.caption(14, color: DashColors.ash),
+          ),
         ),
         // The choice stays the rider's; this only says what the sensor is
         // doing on this scooter.
