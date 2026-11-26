@@ -277,22 +277,6 @@ void main() {
     });
   });
 
-  group('side stand sensor toggle', () {
-    // ClientCmd 67 polarity is not settled, so the
-    // bypass UI is hidden until a capture answers it. The passcode-gate /
-    // warning-card flow and the telltale wiring stay in code but are
-    // unreachable from the settings screen.
-    testWidgets('is not rendered in the riding section', (tester) async {
-      await pumpApp(tester);
-      container.read(settingsScreenOpenProvider.notifier).open();
-      await settle(tester);
-      await tester.tap(k('section-riding'));
-      await settle(tester);
-      expect(k('riding-sideStandCutOff'), findsNothing);
-      expect(find.text('Side stand sensor'), findsNothing);
-    });
-  });
-
   group('greeting', () {
     testWidgets('shows after the first unlock and fades out', (tester) async {
       await boot(tester);

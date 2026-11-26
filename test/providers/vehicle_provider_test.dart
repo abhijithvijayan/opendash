@@ -2113,17 +2113,18 @@ void main() {
       h.dispose();
     });
 
-    // ClientCmd 67 polarity is unknown - 1 may enable
-    // either the stand interlock or the override. Until a capture settles
-    // it, setFeature for sideStandCutOff must send nothing.
-    test('sideStandCutOff sends nothing (cmd 67 polarity unknown)', () async {
+    // 1 is SIDE_STAND_ENABLE in both stock apps (Session 50 U03); the
+    // sensor on is 1, the bypass 0, and HHMIS's _STAT answers it.
+    test('sideStandCutOff sends SIDE_STAND_TOGGLE, sensor on = 1', () async {
       final h = _Harness();
-      h.notifier.setFeature(RidingFeature.sideStandCutOff, true);
       h.notifier.setFeature(RidingFeature.sideStandCutOff, false);
+      h.notifier.setFeature(RidingFeature.sideStandCutOff, true);
       await Future<void>.delayed(Duration.zero);
-      expect(h.calls, isEmpty);
-      expect(HhmisCmd.features.keys, isNot(contains(RidingFeature.sideStandCutOff)));
-      expect(HhmisCmd.names.values, isNot(contains('sideStandCutOff')));
+      expect(h.calls, [
+        'sendIntCmd {cmd: SIDE_STAND_TOGGLE, value: 0}',
+        'sendIntCmd {cmd: SIDE_STAND_TOGGLE, value: 1}',
+      ]);
+      expect(h.notifier.acksFeature(RidingFeature.sideStandCutOff), isTrue);
       h.dispose();
     });
 
