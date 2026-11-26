@@ -121,6 +121,8 @@ jobs:
           USAGE_PING_URL: ${{ github.repository == 'abhijithvijayan/opendash' && vars.USAGE_PING_URL || '' }}
           # Where this build looks for its own updates: the repository it is released from.
           RELEASES_REPO: ${{ github.repository }}
+          # The companion app the QR code leads to; unset, this project's.
+          COMPANION_REPO: ${{ vars.COMPANION_REPO }}
         run: |
           if [ "$GITHUB_REPOSITORY" = "abhijithvijayan/opendash" ] && [ -z "$USAGE_PING_URL" ]; then
             echo "The USAGE_PING_URL repository variable is not set: this release would count no installs."

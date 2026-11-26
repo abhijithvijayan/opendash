@@ -16,8 +16,9 @@ const ownPackage = 'in.abhijithvijayan.opendash';
 const issuesUrl = '$repoUrl/issues';
 
 /// The phone app that installs, updates and removes OpenDash, and sends it
-/// updates when the scooter can't reach GitHub.
-const companionRepoUrl = 'github.com/abhijithvijayan/opendash-companion';
+/// updates when the scooter can't reach GitHub (the QR code's link). A fork
+/// with its own companion sets the COMPANION_REPO repository variable.
+const companionRepoUrl = 'github.com/${String.fromEnvironment('COMPANION_REPO', defaultValue: 'abhijithvijayan/opendash-companion')}';
 const stockDashboardPackage = 'com.olaelectric.hmiclient';
 const openHeadunitPackage = 'com.andrerinas.headunitrevived';
 const diplayPackage = 'com.shihab.diplay';

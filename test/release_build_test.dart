@@ -10,6 +10,15 @@ void main() {
     expect(releasesRepo, 'abhijithvijayan/opendash');
   });
 
+  test('without COMPANION_REPO the QR code leads to this project\'s companion app', () {
+    expect(companionRepoUrl, 'github.com/abhijithvijayan/opendash-companion');
+  });
+
+  test('a release can point the QR code at another companion app', () {
+    expect(File('scripts/release.sh').readAsStringSync(), contains('--dart-define=COMPANION_REPO='));
+    expect(File('.github/workflows/release.yml').readAsStringSync(), contains(r'COMPANION_REPO: ${{ vars.COMPANION_REPO }}'));
+  });
+
   test('a release is told which repository it came from, and where the usage ping goes', () {
     final script = File('scripts/release.sh').readAsStringSync();
     expect(script, contains('--dart-define=RELEASES_REPO='));

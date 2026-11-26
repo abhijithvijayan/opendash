@@ -91,7 +91,8 @@ if [[ -z "${USAGE_PING_URL:-}" ]]; then
 fi
 flutter build apk --release --build-number="$BUILD" --dart-define=GIT_SHA="$GIT_SHA" \
   --dart-define=USAGE_PING_URL="${USAGE_PING_URL:-}" \
-  --dart-define=RELEASES_REPO="${RELEASES_REPO:-abhijithvijayan/opendash}" ${TRIAL_ARGS[@]+"${TRIAL_ARGS[@]}"}
+  --dart-define=RELEASES_REPO="${RELEASES_REPO:-abhijithvijayan/opendash}" \
+  --dart-define=COMPANION_REPO="${COMPANION_REPO:-abhijithvijayan/opendash-companion}" ${TRIAL_ARGS[@]+"${TRIAL_ARGS[@]}"}
 
 mkdir -p dist
 rm -f dist/opendash-*.apk dist/opendash-release.json
