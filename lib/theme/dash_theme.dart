@@ -105,7 +105,126 @@ class DashTheme {
     warning: Color(0xFFD97706),
   );
 
-  static const builtIn = [dark, midnight, ember, light];
+  /// Matte carbon telemetry with motorsport amber and titanium contrast.
+  static const carbonGt = DashTheme(
+    name: 'Carbon GT',
+    ink: Color(0xFF090A0D),
+    inkLift: Color(0xFF14171E),
+    bone: Color(0xFFF5F7FA),
+    ash: Color(0xFF8C95A6),
+    slate: Color(0xFF292F3B),
+    eco: Color(0xFF2ED573),
+    normal: Color(0xFFFFB020),
+    sport: Color(0xFFFF6A00),
+    hyper: Color(0xFFFF2D55),
+    charging: Color(0xFF38BDF8),
+    parked: Color(0xFF6C7485),
+    critical: Color(0xFFFF3B30),
+    warning: Color(0xFFFFCC00),
+  );
+
+  /// Deep synth-indigo with electric cyan and magenta highlights.
+  static const neonPulse = DashTheme(
+    name: 'Neon Pulse',
+    ink: Color(0xFF060814),
+    inkLift: Color(0xFF0F142B),
+    bone: Color(0xFFEEF6FF),
+    ash: Color(0xFF7C8FB8),
+    slate: Color(0xFF23305E),
+    eco: Color(0xFF00FFA3),
+    normal: Color(0xFF00F0FF),
+    sport: Color(0xFF9B6BFF),
+    hyper: Color(0xFFFF2E93),
+    charging: Color(0xFF38F9D7),
+    parked: Color(0xFF5D6B94),
+    critical: Color(0xFFFF3366),
+    warning: Color(0xFFFFD166),
+  );
+
+  /// Stealth obsidian pine with crisp emerald and mint gauges.
+  static const emeraldStealth = DashTheme(
+    name: 'Emerald Stealth',
+    ink: Color(0xFF050B08),
+    inkLift: Color(0xFF0D1A14),
+    bone: Color(0xFFECFDF5),
+    ash: Color(0xFF7EA695),
+    slate: Color(0xFF1F3B2E),
+    eco: Color(0xFF22E58B),
+    normal: Color(0xFF38BDF8),
+    sport: Color(0xFFF59E0B),
+    hyper: Color(0xFFA855F7),
+    charging: Color(0xFF6EF3B5),
+    parked: Color(0xFF5A7A6B),
+    critical: Color(0xFFFF4D4F),
+    warning: Color(0xFFFBBF24),
+  );
+
+  /// Asphalt dark cockpit with aggressive telemetry crimson accents.
+  static const crimsonTrack = DashTheme(
+    name: 'Crimson Track',
+    ink: Color(0xFF0D0709),
+    inkLift: Color(0xFF1A0F13),
+    bone: Color(0xFFFFF1F2),
+    ash: Color(0xFFA8858B),
+    slate: Color(0xFF3A2228),
+    eco: Color(0xFF4ADE80),
+    normal: Color(0xFFFF758F),
+    sport: Color(0xFFFF2A42),
+    hyper: Color(0xFFFF9500),
+    charging: Color(0xFF38BDF8),
+    parked: Color(0xFF7D5F66),
+    critical: Color(0xFFFF1744),
+    warning: Color(0xFFFFA726),
+  );
+
+  /// Warm desert slate with metallic burnt gold and copper dials.
+  static const duneSolar = DashTheme(
+    name: 'Dune Solar',
+    ink: Color(0xFF110E0A),
+    inkLift: Color(0xFF1E1912),
+    bone: Color(0xFFFFFBEB),
+    ash: Color(0xFFB09E86),
+    slate: Color(0xFF3D3326),
+    eco: Color(0xFF34D399),
+    normal: Color(0xFFEAB308),
+    sport: Color(0xFFF97316),
+    hyper: Color(0xFFEC4899),
+    charging: Color(0xFF2DD4BF),
+    parked: Color(0xFF827462),
+    critical: Color(0xFFEF4444),
+    warning: Color(0xFFFACC15),
+  );
+
+  /// High-contrast arctic frost light theme built for direct sunlight.
+  static const glacierLight = DashTheme(
+    name: 'Glacier Light',
+    ink: Color(0xFFEAF1F8),
+    inkLift: Color(0xFFFFFFFF),
+    bone: Color(0xFF0B1220),
+    ash: Color(0xFF4B5C74),
+    slate: Color(0xFFCBD7E6),
+    eco: Color(0xFF059669),
+    normal: Color(0xFF0066FF),
+    sport: Color(0xFFEA580C),
+    hyper: Color(0xFF9333EA),
+    charging: Color(0xFF0891B2),
+    parked: Color(0xFF7B8CA3),
+    critical: Color(0xFFDC2626),
+    warning: Color(0xFFD97706),
+  );
+
+  static const builtIn = [
+    dark,
+    midnight,
+    ember,
+    light,
+    carbonGt,
+    neonPulse,
+    emeraldStealth,
+    crimsonTrack,
+    duneSolar,
+    glacierLight,
+  ];
 
   bool get isLight => ink.computeLuminance() > 0.5;
 

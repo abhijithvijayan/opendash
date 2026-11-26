@@ -17,9 +17,11 @@ class ThemeCards extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(themeProvider);
-    return Row(
+    return Wrap(
+      spacing: 14,
+      runSpacing: 16,
       children: [
-        for (final t in DashTheme.builtIn) ...[
+        for (final t in DashTheme.builtIn)
           GestureDetector(
             key: ValueKey('theme-${t.name.toLowerCase()}'),
             behavior: HitTestBehavior.opaque,
@@ -49,8 +51,6 @@ class ThemeCards extends ConsumerWidget {
               ],
             ),
           ),
-          if (t != DashTheme.builtIn.last) const SizedBox(width: 14),
-        ],
       ],
     );
   }
