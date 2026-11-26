@@ -33,7 +33,7 @@ const reel = bool.fromEnvironment('OPENDASH_VIDEO_REEL');
 
 /// One still per thumbnail look instead of a video.
 const thumb = bool.fromEnvironment('OPENDASH_THUMBNAIL');
-const out = thumb ? 'build/launch_video/thumbs' : reel ? 'build/launch_video/reel' : 'build/launch_video';
+const out = thumb ? (reel ? 'build/launch_video/thumbs-reel' : 'build/launch_video/thumbs') : reel ? 'build/launch_video/reel' : 'build/launch_video';
 final scenes = thumb ? thumbnails : reel ? reelTimeline : timeline;
 
 /// OpenDash Companion's filmed install (its tool/promo/render_test.dart).

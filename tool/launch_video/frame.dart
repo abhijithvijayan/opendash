@@ -379,9 +379,10 @@ class ReelFrame extends StatelessWidget {
             final push = 1 + 0.015 * s.frame / s.frames;
             const screenWidth = 960.0;
             final housing = DisplayHousing.sizeFor(screenWidth);
-            const centreY = 1030.0;
+            final centreY = scene.kind == SceneKind.thumbnail ? 1240.0 : 1030.0;
             return Stack(
               children: [
+                if (scene.kind == SceneKind.thumbnail) Positioned.fill(child: _ThumbnailBackdrop(s)),
                 if (!card && scene.kind != SceneKind.phone)
                   Positioned(
                     left: (1080 - housing.width) / 2,
@@ -410,6 +411,7 @@ class ReelFrame extends StatelessWidget {
                     width: 1000 * phoneAspect,
                     child: Opacity(opacity: s.edge(10), child: PhoneHousing(state: s)),
                   ),
+                if (scene.kind == SceneKind.thumbnail) Positioned.fill(child: _ReelCoverWords(s)),
                 if (scene.kind == SceneKind.dashWithCaption || scene.kind == SceneKind.titleCard || scene.kind == SceneKind.phone)
                   Positioned(
                     left: 70,
@@ -888,6 +890,38 @@ class _ThumbnailWords extends StatelessWidget {
             decoration: BoxDecoration(color: glow, borderRadius: BorderRadius.circular(14)),
             child: Text(scene.footnote!, style: _wide(46, color: _ink, weight: 850, width: 110)),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// A reel cover's words, inside the 3:4 middle the profile grid keeps.
+class _ReelCoverWords extends StatelessWidget {
+  const _ReelCoverWords(this.s);
+  final FrameState s;
+
+  @override
+  Widget build(BuildContext context) {
+    final glow = s.accent ?? _accent;
+    Widget chip(String text, Color bg, Color fg) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+          child: Text(text, style: _wide(40, color: fg, weight: 850, width: 108)),
+        );
+    const shadow = [Shadow(color: Color(0xCC000000), blurRadius: 30)];
+    return Padding(
+      padding: const EdgeInsets.only(top: 300),
+      child: Column(
+        children: [
+          Text('NEW DASH', style: _wide(128, weight: 900, width: 118).copyWith(height: 1, shadows: shadow)),
+          const SizedBox(height: 12),
+          Text('for Ola S1 scooters', style: _wide(54, weight: 650, width: 105).copyWith(shadows: shadow)),
+          const SizedBox(height: 34),
+          chip('CARPLAY · ANDROID AUTO', _fg, _ink),
+          const SizedBox(height: 16),
+          chip('FREE & OPEN SOURCE', glow, _ink),
         ],
       ),
     );

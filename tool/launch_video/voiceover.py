@@ -48,8 +48,8 @@ def main():
     graph = ';'.join(parts + [
         f'{mix}amix=inputs={len(placed)}:normalize=0,apad=whole_dur={length},loudnorm=I=-16:TP=-1.5:LRA=7[voice]',
         '[voice]asplit=2[voice1][key]',
-        f'[1:a]aresample=44100,volume=-17dB,afade=t=in:d=0.5,afade=t=out:st={fade}:d=3[music]',
-        '[music][key]sidechaincompress=threshold=0.02:ratio=6:attack=40:release=450[ducked]',
+        f'[1:a]aresample=44100,volume=-11dB,afade=t=in:d=0.5,afade=t=out:st={fade}:d=3[music]',
+        '[music][key]sidechaincompress=threshold=0.015:ratio=8:attack=40:release=450[ducked]',
         '[ducked][voice1]amix=inputs=2:normalize=0,alimiter=limit=0.95[a]',
     ])
     subprocess.run(['ffmpeg', '-y', '-v', 'error', *inputs, '-filter_complex', graph,

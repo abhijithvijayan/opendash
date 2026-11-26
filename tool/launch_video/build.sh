@@ -30,7 +30,12 @@ if [[ "${1:-}" == "--thumbnails" ]]; then
   for f in build/launch_video/thumbs/*.png; do
     ffmpeg -v error -y -i "$f" -vf scale=1280:720 -q:v 2 "$final/thumbnails/$(basename "$f" .png).jpg"
   done
-  echo "thumbnails: $final/thumbnails"
+  flutter test tool/launch_video/render_test.dart --dart-define=OPENDASH_NO_DEV_PANEL=true --dart-define=OPENDASH_THUMBNAIL=true --dart-define=OPENDASH_VIDEO_REEL=true
+  /bin/mkdir -p "$final/reel-covers"
+  for f in build/launch_video/thumbs-reel/*.png; do
+    ffmpeg -v error -y -i "$f" -q:v 2 "$final/reel-covers/$(basename "$f" .png | sed 's/thumb-/cover-/').jpg"
+  done
+  echo "thumbnails: $final/thumbnails and $final/reel-covers"
   exit 0
 fi
 
