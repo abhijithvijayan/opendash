@@ -125,6 +125,11 @@ abstract final class PrefsKeys {
   /// after a restart spent on Light.
   static const themeLastDark = 'themeLastDark';
 
+  /// The rider's light theme, by name, for auto theme to go back to by day
+  /// after a restart spent on a dark theme. Keeps a chosen light variant
+  /// (not just stock Light) across sunrises.
+  static const themeLastLight = 'themeLastLight';
+
   /// Settings → Developer → "Bus log": on until it is turned off.
   static const busLog = 'busLog';
 }

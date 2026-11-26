@@ -165,6 +165,19 @@ void main() {
       expect(c.read(themeProvider), DashTheme.light);
     });
 
+    test('the light theme the rider last picked is the one restored at sunrise', () {
+      s().evaluate(at(12));
+      expect(c.read(themeProvider), DashTheme.light);
+      // The rider prefers the high-contrast light theme over stock Light.
+      c.read(themeProvider.notifier).setTheme(DashTheme.glacierLight);
+      // Evening falls back to the last dark theme (Ember, from setUp)...
+      s().evaluate(at(22));
+      expect(c.read(themeProvider), DashTheme.ember);
+      // ...and the next morning restores their light choice, not stock Light.
+      s().evaluate(at(7));
+      expect(c.read(themeProvider), DashTheme.glacierLight);
+    });
+
     test('holds across a restart in the same stretch of the schedule', () async {
       c.read(themeProvider.notifier).setTheme(DashTheme.light);
       c.dispose();
