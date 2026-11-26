@@ -112,20 +112,21 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
-      # USAGE_PING_URL is a repository variable, not a secret: it ends up in
-      # every APK. Only this repository's releases send the usage ping; a
-      # fork's release workflow builds without it and counts nothing.
+      # USAGE_PING_URL: a secret (or a variable). It still ends up in every
+      # APK; a secret keeps it out of the repository's settings page and the
+      # logs. Only this repository's releases send the usage ping; a fork's
+      # release workflow builds without it and counts nothing.
       - name: Build and sign
         env:
           RELEASE_CERT_SHA256: ${{ vars.RELEASE_CERT_SHA256 || secrets.RELEASE_CERT_SHA256 }}
-          USAGE_PING_URL: ${{ github.repository == 'abhijithvijayan/opendash' && vars.USAGE_PING_URL || '' }}
+          USAGE_PING_URL: ${{ github.repository == 'abhijithvijayan/opendash' && (secrets.USAGE_PING_URL || vars.USAGE_PING_URL) || '' }}
           # Where this build looks for its own updates: the repository it is released from.
           RELEASES_REPO: ${{ github.repository }}
           # The companion app the QR code leads to; unset, this project's.
           COMPANION_REPO: ${{ vars.COMPANION_REPO }}
         run: |
           if [ "$GITHUB_REPOSITORY" = "abhijithvijayan/opendash" ] && [ -z "$USAGE_PING_URL" ]; then
-            echo "The USAGE_PING_URL repository variable is not set: this release would count no installs."
+            echo "USAGE_PING_URL is not set (as a secret or a variable): this release would count no installs."
             exit 1
           fi
           scripts/release.sh "$VERSION"

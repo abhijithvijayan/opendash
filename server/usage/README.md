@@ -42,8 +42,9 @@ npx wrangler secret put STATS_TOKEN          # any long random string
 npx wrangler deploy
 ```
 
-Set the deployed address followed by `/v1/ping` as the repository variable
-`USAGE_PING_URL` (Settings → Secrets and variables → Actions → Variables).
+Set the deployed address followed by `/v1/ping` as the repository secret
+`USAGE_PING_URL` (Settings → Secrets and variables → Actions; a variable of
+that name works too). It still ends up in every APK.
 The release workflow builds it in with `--dart-define=USAGE_PING_URL`;
 a build without it (a fork, a local or `deploy.sh` build) sends no ping.
 For a release built by hand: `USAGE_PING_URL=… scripts/release.sh <version>`.
