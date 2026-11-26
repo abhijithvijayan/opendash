@@ -6,8 +6,10 @@ const repoUrl = 'github.com/abhijithvijayan/opendash';
 /// It must be public: the app asks without a token.
 const releasesRepo = 'abhijithvijayan/opendash';
 /// Where the anonymous weekly usage ping goes (`server/usage`). Empty: none
-/// is sent.
-const usagePingUrl = 'https://opendash-usage.abhijithvijayan.workers.dev/v1/ping';
+/// is sent. Given only to official releases, by the release workflow
+/// (`--dart-define=USAGE_PING_URL`, from the repository's USAGE_PING_URL
+/// variable): a fork or a local build counts nothing, anywhere.
+const usagePingUrl = String.fromEnvironment('USAGE_PING_URL');
 const ownPackage = 'in.abhijithvijayan.opendash';
 const issuesUrl = '$repoUrl/issues';
 

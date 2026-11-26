@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:opendash/constants.dart';
 import 'package:opendash/providers/mock_provider.dart';
 import 'package:opendash/models/scooter_model.dart';
 import 'package:opendash/models/vehicle_data.dart';
@@ -165,6 +166,13 @@ void main() {
       await ping().sendIfDue();
       expect(platform.usagePings, isEmpty);
     });
+  });
+
+  test('a build is given the ping address by the release workflow; any other build (a fork, a local build) sends none', () {
+    expect(usagePingUrl, isEmpty, reason: 'tests run without --dart-define=USAGE_PING_URL');
+    UsagePing.sendsHere = UsagePing.sendsOnRelease;
+    expect(UsagePing.sendsHere(), isFalse);
+    UsagePing.sendsHere = () => false;
   });
 
   test('the request carries no header but the app name', () {

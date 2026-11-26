@@ -41,7 +41,10 @@ class UsagePing extends Notifier<bool> {
 
   /// Only from a real scooter, and only once the server exists.
   @visibleForTesting
-  static bool Function() sendsHere = () => useAidlVehicle && usagePingUrl.isNotEmpty;
+  static bool Function() sendsHere = sendsOnRelease;
+
+  /// On a head unit, in a build that was given the address.
+  static bool sendsOnRelease() => useAidlVehicle && usagePingUrl.isNotEmpty;
 
   Timer? _timer;
   bool _sending = false;

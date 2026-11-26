@@ -85,7 +85,12 @@ if [[ -n "$TRIAL" ]]; then
 fi
 
 echo "=== Building OpenDash $VERSION, build $BUILD, commit $GIT_SHA ==="
-flutter build apk --release --build-number="$BUILD" --dart-define=GIT_SHA="$GIT_SHA" ${TRIAL_ARGS[@]+"${TRIAL_ARGS[@]}"}
+# The usage ping's address: only builds given one send it (lib/constants.dart).
+if [[ -z "${USAGE_PING_URL:-}" ]]; then
+  echo "Note: USAGE_PING_URL is not set; this build sends no usage ping."
+fi
+flutter build apk --release --build-number="$BUILD" --dart-define=GIT_SHA="$GIT_SHA" \
+  --dart-define=USAGE_PING_URL="${USAGE_PING_URL:-}" ${TRIAL_ARGS[@]+"${TRIAL_ARGS[@]}"}
 
 mkdir -p dist
 rm -f dist/opendash-*.apk dist/opendash-release.json
