@@ -664,19 +664,53 @@ void main() {
         // A frame lands, then the dump goes silent (server stops, no close).
         dump.add(frame(0x1A5, List.filled(8, 1)));
         async.flushMicrotasks();
-        async.elapse(const Duration(seconds: 1));
-        expect(sessions, hasLength(1), reason: 'a 1s quiet is not a stall');
-        async.elapse(const Duration(seconds: 2));
+        async.elapse(const Duration(milliseconds: 600));
+        expect(sessions, hasLength(1), reason: 'a 0.6 s quiet is not a stall');
+        async.elapse(const Duration(milliseconds: 800));
         async.flushMicrotasks();
         expect(sessions.length, greaterThanOrEqualTo(2), reason: 'a fresh session, not a dead-stream reopen');
         expect(AnalyticsLogger.instance.recent('grpc', 'dump_restart'), isNotEmpty);
         expect(AnalyticsLogger.instance.recent('grpc', 'lost'), isEmpty, reason: 'values kept, no backoff');
         // Frames on the reconnected dump recover it; no further restarts.
-        dump.add(frame(0x1A5, List.filled(8, 1)));
-        async.flushMicrotasks();
         final n = sessions.length;
-        async.elapse(const Duration(seconds: 2));
+        for (var i = 0; i < 20; i++) {
+          dump.add(frame(0x1A5, List.filled(8, 1)));
+          async.elapse(const Duration(milliseconds: 100));
+        }
         expect(sessions.length, n, reason: 'a recovered dump is not restarted');
+        c.dispose();
+        for (final p in primaries) {
+          p.close();
+        }
+        dump.close();
+      });
+    });
+
+    // 2026-11-26 Gen 1 / 5.0.2: the server cut each dump ~18 s in, and
+    // the 2.5 s it took to notice hid a side-stand command.
+    test('a flowing dump moves to a fresh session before the server cuts it', () {
+      fakeAsync((async) {
+        AnalyticsLogger.instance.monoOverride = () => async.elapsed.inMicroseconds;
+        final primaries = <StreamController<List<int>>>[];
+        final dump = StreamController<List<int>>.broadcast();
+        final sessions = <_Session>[];
+        final c = dumpHarness(sessions, primaries, dump);
+        async.flushMicrotasks();
+        c.read(batteryDiagnosticsProvider.notifier).send(const CanBusLogStart(header: {}));
+        async.flushMicrotasks();
+        void flow(Duration d) {
+          for (var t = Duration.zero; t < d; t += const Duration(milliseconds: 100)) {
+            dump.add(frame(0x1A5, List.filled(8, 1)));
+            async.elapse(const Duration(milliseconds: 100));
+          }
+        }
+
+        flow(GrpcDiagnosticsNotifier.dumpRotateAfter - const Duration(seconds: 1));
+        expect(sessions, hasLength(1));
+        flow(const Duration(seconds: 2));
+        expect(sessions, hasLength(2), reason: 'rotated ahead of the cut');
+        expect(AnalyticsLogger.instance.recent('grpc', 'dump_restart'), isEmpty, reason: 'no stall was waited out');
+        expect(AnalyticsLogger.instance.recent('grpc', 'lost'), isEmpty);
         c.dispose();
         for (final p in primaries) {
           p.close();

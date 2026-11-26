@@ -36,6 +36,7 @@ class GrpcDiagnosticsNotifier extends BatteryDiagnosticsNotifier {
   static const dumpRecheckMax = CanLink.dumpRecheckMax;
   static const dumpStallWindow = CanLink.dumpStallWindow;
   static const dumpStallCheck = CanLink.dumpStallCheck;
+  static const dumpRotateAfter = CanLink.dumpRotateAfter;
 
   /// Given, the link runs in this isolate on it; otherwise in the bus worker.
   final FrameSource? source;
