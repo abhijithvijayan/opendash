@@ -119,6 +119,8 @@ jobs:
         env:
           RELEASE_CERT_SHA256: ${{ vars.RELEASE_CERT_SHA256 || secrets.RELEASE_CERT_SHA256 }}
           USAGE_PING_URL: ${{ github.repository == 'abhijithvijayan/opendash' && vars.USAGE_PING_URL || '' }}
+          # Where this build looks for its own updates: the repository it is released from.
+          RELEASES_REPO: ${{ github.repository }}
         run: |
           if [ "$GITHUB_REPOSITORY" = "abhijithvijayan/opendash" ] && [ -z "$USAGE_PING_URL" ]; then
             echo "The USAGE_PING_URL repository variable is not set: this release would count no installs."

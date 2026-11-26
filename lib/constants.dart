@@ -3,8 +3,10 @@ const appVersion = '0.3.4';
 const repoUrl = 'github.com/abhijithvijayan/opendash';
 
 /// Where OpenDash's own releases are published (`owner/repo` on GitHub).
-/// It must be public: the app asks without a token.
-const releasesRepo = 'abhijithvijayan/opendash';
+/// It must be public: the app asks without a token. The release workflow
+/// passes the repository it runs in (`--dart-define=RELEASES_REPO`), so a
+/// fork's releases check the fork's own; any other build checks this one.
+const releasesRepo = String.fromEnvironment('RELEASES_REPO', defaultValue: 'abhijithvijayan/opendash');
 /// Where the anonymous weekly usage ping goes (`server/usage`). Empty: none
 /// is sent. Given only to official releases, by the release workflow
 /// (`--dart-define=USAGE_PING_URL`, from the repository's USAGE_PING_URL
