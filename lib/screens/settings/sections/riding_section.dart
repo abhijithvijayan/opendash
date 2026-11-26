@@ -18,9 +18,8 @@ class RidingSection extends ConsumerWidget {
   /// reports as not available drops out of its group.
   static const groups = [
     ('Braking & Stability', [RidingFeature.adaptivePowerBoost, RidingFeature.hillHold]),
-    // sideStandCutOff hidden: ClientCmd 67 polarity unknown; the
-    // auto-lock sub-toggle is rendered below the Safety group instead.
-    ('Safety', [RidingFeature.fallDetection, RidingFeature.tamper, RidingFeature.motorCutOff]),
+    // The auto-lock sub-toggle is rendered below the Safety group.
+    ('Safety', [RidingFeature.fallDetection, RidingFeature.tamper, RidingFeature.motorCutOff, RidingFeature.sideStandCutOff]),
     ('Lights', [RidingFeature.smartHeadlight, RidingFeature.smartDrl, RidingFeature.autoHeadlight, RidingFeature.takeMeHome]),
     // Auto brightness is in Display, next to the brightness levels it sets.
     ('Convenience', [RidingFeature.proximityUnlock, RidingFeature.autoTurnOff, RidingFeature.vacationMode, RidingFeature.predictedRange]),

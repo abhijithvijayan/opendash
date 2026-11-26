@@ -211,7 +211,7 @@ abstract final class HhmisCmd {
     'MOTOR_CUTOFF_TOGGLE': 'motorCutOff',
     'VACATION_MODE_TOGGLE': 'vacationMode',
     'TAKE_ME_HOME_TOGGLE': 'takeMeHome',
-    // SIDE_STAND_TOGGLE sideStandCutOff: polarity unknown (Q1), do not send.
+    'SIDE_STAND_TOGGLE': 'sideStandCutOff',
     'PREDICT_RANGE_TOGGLE': 'predictedRange',
   };
 
@@ -228,7 +228,9 @@ abstract final class HhmisCmd {
     RidingFeature.motorCutOff: 'MOTOR_CUTOFF_TOGGLE',
     RidingFeature.vacationMode: 'VACATION_MODE_TOGGLE',
     RidingFeature.takeMeHome: 'TAKE_ME_HOME_TOGGLE',
-    // sideStandCutOff: SIDE_STAND_TOGGLE polarity not settled; see Q1.
+    // 1 is SIDE_STAND_ENABLE and 0 SIDE_STAND_DISABLE in both stock apps
+    // (Session 50 U03). What "disabled" does on the VCU is still unproven.
+    RidingFeature.sideStandCutOff: 'SIDE_STAND_TOGGLE',
     RidingFeature.predictedRange: 'PREDICT_RANGE_TOGGLE',
   };
 }
@@ -782,6 +784,7 @@ class AidlVehicleNotifier extends VehicleNotifier {
     'BOOL_AUTO_INDICATOR_TURNOFF_TOGGLE_STAT': RidingFeature.autoTurnOff,
     'BOOL_MOTOR_CUTOFF_TOGGLE_STAT': RidingFeature.motorCutOff,
     'BOOL_TAKE_ME_HOME_TOGGLE_STAT': RidingFeature.takeMeHome,
+    'BOOL_SIDE_STAND_TOGGLE_STAT': RidingFeature.sideStandCutOff,
   };
 
   @override
@@ -1222,6 +1225,10 @@ class AidlVehicleNotifier extends VehicleNotifier {
       logEvent('hhmis', 'feature_ack', {'feature': feature.name, 'ok': ok});
       featureAckHandler?.call(feature, ok);
     }
+    // Not mirrored (`hhmis_mapping.dart`); logged to read what the VCU
+    // keeps before and after a side-stand toggle.
+    final standPersist = delta['BOOL_SIDE_STAND_PERSIST_TOGGLE'];
+    if (standPersist is bool) logEvent('hhmis', 'side_stand_persist', {'on': standPersist});
     final music = delta['INT_BT_MUSIC_COMMAND'];
     if (music is int) _musicCommand(music);
     final callHandle = delta['BOOL_BT_CALL_HANDLE_REQUEST'];

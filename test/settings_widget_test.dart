@@ -7,6 +7,7 @@ import 'package:opendash/screens/settings/widgets.dart';
 import 'package:opendash/screens/settings/sections/riding_section.dart';
 import 'package:opendash/screens/settings/sections/sound_section.dart';
 import 'package:opendash/state/media_state.dart';
+import 'package:opendash/state/passcode_gate.dart';
 import 'package:opendash/state/riding_settings.dart';
 import 'package:opendash/state/settings_state.dart';
 import 'package:opendash/state/sound_settings.dart';
@@ -88,6 +89,19 @@ void main() {
     await settle(tester);
     expect(container.read(ridingSettingsProvider).isOn(RidingFeature.hillHold), isTrue);
     expect(find.text('Hill Hold Assist'), findsNothing);
+  });
+
+  testWidgets('riding section: the side stand bypass asks for the passcode first', (tester) async {
+    await pumpApp(tester);
+    await openSettings(tester);
+    await tester.tap(k('section-riding'));
+    await settle(tester);
+    await tester.ensureVisible(k('riding-sideStandCutOff'));
+    await settle(tester);
+    await tester.tap(find.descendant(of: k('riding-sideStandCutOff'), matching: find.byType(DashSwitch)), warnIfMissed: false);
+    await settle(tester);
+    expect(container.read(passcodeGateProvider).open, isTrue);
+    expect(container.read(ridingSettingsProvider).isOn(RidingFeature.sideStandCutOff), isTrue);
   });
 
   testWidgets('connectivity: manage devices opens the BT screen', (tester) async {

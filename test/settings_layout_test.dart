@@ -129,8 +129,8 @@ void main() {
       expect(at('Hill hold assist'), lessThan(at('SAFETY')));
       expect(at('SAFETY'), lessThan(at('Fall detection')));
       expect(at('Motor cut-off'), lessThan(at('LIGHTS')));
-      // Side-stand sensor toggle is hidden (cmd 67 polarity unknown).
-      expect(texts.contains('Side stand sensor'), isFalse);
+      expect(at('Motor cut-off'), lessThan(at('Side stand sensor')));
+      expect(at('Side stand sensor'), lessThan(at('LIGHTS')));
       expect(at('LIGHTS'), lessThan(at('Smart headlight')));
       expect(at('Take-me-home lights'), lessThan(at('CONVENIENCE')));
       expect(at('CONVENIENCE'), lessThan(at('Proximity unlock')));
@@ -138,9 +138,8 @@ void main() {
       // Tow/tamper detection carries its alarm sound chips; they stay with it.
       expect(at('Tow/tamper detection'), lessThan(at('Motor cut-off')));
       for (final f in RidingFeature.values) {
-        // sideStandCutOff toggle is hidden (cmd 67 polarity unknown);
-        // auto brightness lives in Display with the brightness levels.
-        if (f == RidingFeature.sideStandCutOff || f == RidingFeature.autoBrightness) {
+        // Auto brightness lives in Display with the brightness levels.
+        if (f == RidingFeature.autoBrightness) {
           expect(find.byKey(ValueKey('riding-${f.name}'), skipOffstage: false), findsNothing, reason: f.name);
           continue;
         }
