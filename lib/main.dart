@@ -204,7 +204,8 @@ Future<void> _startAnalytics() async {
       key: device[key],
     'firmware_built_ms': int.tryParse(device['build_time_ms'] ?? ''),
     'ram_mb': int.tryParse(device['ram_mb'] ?? ''),
-    // The install sets density 160, chosen on Gen 1's 1280x768 screen.
+    // The scooter's own density (installs before 0.3.5 forced 160); OpenDash
+    // scales its 1280x768 canvas to the screen at any density.
     'screen_px': device['screen_px'],
     'density': int.tryParse(device['density'] ?? ''),
     'density_default': int.tryParse(device['density_default'] ?? ''),

@@ -77,8 +77,10 @@ if [[ "$state" != "device" ]]; then
   exit 1
 fi
 
-echo "=== Setting display density ==="
-adb -s "$DEV" shell wm density 160 || true
+# The scooter's own density: OpenDash scales to the display at any density,
+# and forcing 160 shrank every other app and Android's own screens.
+echo "=== Using the scooter's display density ==="
+adb -s "$DEV" shell wm density reset || true
 
 echo "=== Disabling screensaver ==="
 adb -s "$DEV" shell settings put secure screensaver_enabled 0 || true
