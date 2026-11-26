@@ -92,11 +92,14 @@ async function ping(request, env) {
   const row = await check(await request.text(), Date.now());
   if (!row) return new Response(null, { status: 400 });
   const country = text(request.cf?.country ?? '') ?? '';
+  // Which deployment took it (the VIA var): the address in released apps
+  // changed once, after forks had copied the old one.
+  const via = text(env.VIA ?? '') ?? '';
   try {
     await env.DB.prepare(
-      'INSERT INTO pings (week, new, app, build, gen, model, moveos, stock, android, country, proof) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO pings (week, new, app, build, gen, model, moveos, stock, android, country, proof, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
-      .bind(row.week, row.new, row.app, row.build, row.gen, row.model, row.moveos, row.stock, row.android, country, row.proof)
+      .bind(row.week, row.new, row.app, row.build, row.gen, row.model, row.moveos, row.stock, row.android, country, row.proof, via)
       .run();
   } catch (e) {
     if (String(e).includes('UNIQUE')) return new Response(null, { status: 409 });
@@ -151,6 +154,8 @@ async function stats(request, env) {
         `SELECT gen, model, moveos, stock, android, COUNT(*) AS n FROM pings WHERE ${latest} GROUP BY gen, model, moveos, stock, android ORDER BY n DESC`,
       ),
       countries: await all(`SELECT country, COUNT(*) AS n FROM pings WHERE ${latest} GROUP BY country ORDER BY n DESC`),
+      // legacy: the address in apps before 0.3.4, which forks copied.
+      via: await all(`SELECT via, COUNT(*) AS n FROM pings WHERE ${latest} GROUP BY via ORDER BY n DESC`),
     },
   });
 }

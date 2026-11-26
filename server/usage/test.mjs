@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { check, isoWeek, leadingZeroBits } from './src/index.js';
+import worker, { check, isoWeek, leadingZeroBits } from './src/index.js';
 
 const NOW = Date.UTC(2026, 10, 25, 9);
 const payload = (o = {}) =>
@@ -52,4 +52,21 @@ test('the Android version is kept, and an app too old to send it still counts', 
 test('a ping without the stock service version is refused: it came from a phone, not a scooter', async () => {
   const phone = payload({ gen: '', model: '', moveos: '', stock: '', android: '16' });
   assert.equal(await check(JSON.stringify({ ping: phone, n: solve(phone, 22) }), NOW), null);
+});
+
+test('a stored ping says which address it came in on', async () => {
+  const ping = payload();
+  const body = JSON.stringify({ ping, n: solve(ping, 22) });
+  const bound = [];
+  const DB = { prepare: () => ({ bind: (...args) => ({ run: async () => bound.push(args) }) }) };
+  const now = Date.now;
+  Date.now = () => NOW;
+  try {
+    const res = await worker.fetch(new Request('https://w/v1/ping', { method: 'POST', body }), { DB, VIA: 'v2' });
+    assert.equal(res.status, 204);
+  } finally {
+    Date.now = now;
+  }
+  assert.equal(bound.length, 1);
+  assert.equal(bound[0].at(-1), 'v2');
 });

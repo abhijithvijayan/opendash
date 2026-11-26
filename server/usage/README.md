@@ -39,8 +39,28 @@ npx wrangler d1 execute opendash-usage --remote --file schema.sql
 # An existing database made before the Android column:
 #   npx wrangler d1 execute opendash-usage --remote --file migrations-0002-android.sql
 npx wrangler secret put STATS_TOKEN          # any long random string
-npx wrangler deploy
+npx wrangler deploy --var VIA:legacy
 ```
+
+### Two deployments
+
+The address built into apps before 0.3.4 was in the source, and forks
+copied it. Since 0.3.4 the address comes from the release workflow only,
+and points at a second deployment of the same Worker, under a name kept
+out of this repository. Both write to the same database; each row's `via`
+says which took it, so forks and not-yet-updated installs can be told
+apart. Deploy the same code to both:
+
+```bash
+npx wrangler d1 execute opendash-usage --remote --file migrations-0003-via.sql   # once
+npx wrangler deploy --var VIA:legacy                    # the old address
+npx wrangler deploy --name "$USAGE_WORKER" --var VIA:v2 # the current one
+```
+
+`$USAGE_WORKER` is the second Worker's name (in the Cloudflare dashboard).
+It has no `STATS_TOKEN`: read the numbers from the old address, which sees
+the same database. The old one can be deleted once few `legacy` rows come
+in from released versions.
 
 Set the deployed address followed by `/v1/ping` as the repository secret
 `USAGE_PING_URL` (Settings → Secrets and variables → Actions; a variable of
