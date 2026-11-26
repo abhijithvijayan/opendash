@@ -159,7 +159,8 @@ class DashTheme {
     warning: Color(0xFFFBBF24),
   );
 
-  /// Asphalt dark cockpit with aggressive telemetry crimson accents.
+  /// Asphalt dark cockpit with hot magenta-coral crimson accents, kept off
+  /// the alert-red hue so the mode accent never reads as a fault.
   static const crimsonTrack = DashTheme(
     name: 'Crimson Track',
     ink: Color(0xFF0D0709),
@@ -168,31 +169,13 @@ class DashTheme {
     ash: Color(0xFFA8858B),
     slate: Color(0xFF3A2228),
     eco: Color(0xFF4ADE80),
-    normal: Color(0xFFFF758F),
-    sport: Color(0xFFFF2A42),
+    normal: Color(0xFFFF47C2),
+    sport: Color(0xFFFF5536),
     hyper: Color(0xFFFF9500),
     charging: Color(0xFF38BDF8),
     parked: Color(0xFF7D5F66),
     critical: Color(0xFFFF1744),
     warning: Color(0xFFFFA726),
-  );
-
-  /// Warm desert slate with metallic burnt gold and copper dials.
-  static const duneSolar = DashTheme(
-    name: 'Dune Solar',
-    ink: Color(0xFF110E0A),
-    inkLift: Color(0xFF1E1912),
-    bone: Color(0xFFFFFBEB),
-    ash: Color(0xFFB09E86),
-    slate: Color(0xFF3D3326),
-    eco: Color(0xFF34D399),
-    normal: Color(0xFFEAB308),
-    sport: Color(0xFFF97316),
-    hyper: Color(0xFFEC4899),
-    charging: Color(0xFF2DD4BF),
-    parked: Color(0xFF827462),
-    critical: Color(0xFFEF4444),
-    warning: Color(0xFFFACC15),
   );
 
   /// High-contrast arctic frost light theme built for direct sunlight.
@@ -225,7 +208,6 @@ class DashTheme {
     neonPulse,
     emeraldStealth,
     crimsonTrack,
-    duneSolar,
     glacierLight,
   ];
 
