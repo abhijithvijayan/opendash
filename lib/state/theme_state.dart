@@ -145,8 +145,10 @@ class UiThemeNotifier extends Notifier<DashTheme> {
 
 final autoThemeProvider = NotifierProvider<AutoThemeScheduler, bool>(AutoThemeScheduler.new);
 
-/// Switches to Light during the auto dark mode's light hours (or when the
-/// ambient sensor reads bright) and back to the last dark theme otherwise.
+/// Switches to the rider's last light theme during the auto dark mode's
+/// light hours (or when the ambient sensor reads bright) and back to their
+/// last dark theme otherwise, so a chosen variant on either side (not just
+/// stock Light / Dark) survives the switch.
 /// Re-evaluates on every vehicle clock tick, on every ambient reading and
 /// whenever the schedule changes, but switches the theme only when its
 /// decision changes: a theme the rider picks holds until the next sunrise
@@ -154,6 +156,7 @@ final autoThemeProvider = NotifierProvider<AutoThemeScheduler, bool>(AutoThemeSc
 /// setting itself applies at once. State is "currently light".
 class AutoThemeScheduler extends Notifier<bool> {
   DashTheme _lastDark = DashTheme.dark;
+  DashTheme _lastLight = DashTheme.light;
   bool? _decided;
 
   /// When the saved decision was made, until the first evaluation after a
@@ -172,7 +175,13 @@ class AutoThemeScheduler extends Notifier<bool> {
     final lastDarkName = PrefsService.getString(PrefsKeys.themeLastDark, '');
     _lastDark = DashTheme.builtIn.cast<DashTheme?>().firstWhere((t) => t!.name == lastDarkName && !t.isLight, orElse: () => null) ??
         DashTheme.dark;
-    if (!current.isLight) {
+    final lastLightName = PrefsService.getString(PrefsKeys.themeLastLight, '');
+    _lastLight = DashTheme.builtIn.cast<DashTheme?>().firstWhere((t) => t!.name == lastLightName && t.isLight, orElse: () => null) ??
+        DashTheme.light;
+    if (current.isLight) {
+      _lastLight = current;
+      PrefsService.setString(PrefsKeys.themeLastLight, current.name);
+    } else {
       _lastDark = current;
       PrefsService.setString(PrefsKeys.themeLastDark, current.name);
     }
@@ -183,9 +192,13 @@ class AutoThemeScheduler extends Notifier<bool> {
       _decidedAt = DateTime.fromMillisecondsSinceEpoch(savedAt);
     }
     ref.listen(themeProvider, (_, t) {
-      if (t.isLight) return;
-      _lastDark = t;
-      PrefsService.setString(PrefsKeys.themeLastDark, t.name);
+      if (t.isLight) {
+        _lastLight = t;
+        PrefsService.setString(PrefsKeys.themeLastLight, t.name);
+      } else {
+        _lastDark = t;
+        PrefsService.setString(PrefsKeys.themeLastDark, t.name);
+      }
     });
     ref.listen(autoDarkModeProvider, (_, _) => _evaluate(force: true));
     ref.listen(vehicleProvider.select((v) => v.time), (_, _) => _evaluate());
@@ -287,7 +300,7 @@ class AutoThemeScheduler extends Notifier<bool> {
     PrefsService.setString(PrefsKeys.autoThemeDecision, '${light ? 'light' : 'dark'}|${clock().millisecondsSinceEpoch}');
     final current = ref.read(themeProvider);
     if (light && !current.isLight) {
-      ref.read(themeProvider.notifier).setTheme(DashTheme.light);
+      ref.read(themeProvider.notifier).setTheme(_lastLight);
     } else if (!light && current.isLight) {
       ref.read(themeProvider.notifier).setTheme(_lastDark);
     }
