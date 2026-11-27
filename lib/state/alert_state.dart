@@ -25,12 +25,14 @@ class AlertSnapshot {
 
 /// Vehicle alerts plus the one that depends on settings, the speed limit
 /// warning. Critical first, as before. The side stand alert is dropped
-/// while the stand sensor bypass is on.
+/// while the stand sensor bypass is on; the scooter refusing over the
+/// stand never is (2026-11-27: a 4.6.14 scooter ignored the bypass and
+/// refused three times with nothing on screen).
 List<DashAlert> allAlerts(VehicleData v, RidingSettings riding, {bool? overSpeedLimit}) {
   final sensorOn = riding.isOn(RidingFeature.sideStandCutOff);
   final out = [
     for (final a in v.alerts)
-      if (sensorOn || (a.kind != AlertKind.sideStand && a.kind != AlertKind.standToRide)) a,
+      if (sensorOn || a.kind != AlertKind.sideStand) a,
   ];
   if (overSpeedLimit ?? (riding.speedLimitEnabled && v.speed > riding.speedLimit)) {
     out.add(DashAlert(

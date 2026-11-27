@@ -95,13 +95,12 @@ void main() {
       });
     });
 
-    test('stand hint is dropped while the side stand sensor is bypassed', () {
+    // 2026-11-27, Gen 1 on 4.6.14: the scooter ignored the bypass and
+    // refused three times with nothing on screen.
+    test('the scooter refusing over the stand shows even while bypassed', () {
       withApp((async, c, v) {
         c.read(ridingSettingsProvider.notifier).forceFeature(RidingFeature.sideStandCutOff, false);
         v.showStandHint();
-        async.flushMicrotasks();
-        expect(visible(c), isNot(contains(AlertKind.standToRide)));
-        c.read(ridingSettingsProvider.notifier).forceFeature(RidingFeature.sideStandCutOff, true);
         async.flushMicrotasks();
         expect(visible(c), contains(AlertKind.standToRide));
       });
