@@ -96,6 +96,7 @@ class RidingSettings {
     this.speedLimitEnabled = true,
     this.speedLimit = 80,
     this.standBypassPrompt = false,
+    this.standBypassIgnored = false,
     this.autoLockEnabled = false,
   }) : features = Map.unmodifiable(features ?? {for (final f in RidingFeature.values) f: f.defaultOn});
 
@@ -132,6 +133,10 @@ class RidingSettings {
   /// The side stand bypass warning is on screen awaiting "Disable".
   final bool standBypassPrompt;
 
+  /// This scooter refused over the stand while bypassed
+  /// ([PrefsKeys.standBypassIgnored]).
+  final bool standBypassIgnored;
+
   /// The vacation mode confirmation is on screen; nothing is sent before it.
   final bool vacationPrompt;
 
@@ -147,7 +152,7 @@ class RidingSettings {
     if (features[RidingFeature.sideStandCutOff] == false && !PrefsService.getBool(PrefsKeys.standBypassConfirmed, false)) {
       features[RidingFeature.sideStandCutOff] = true;
     }
-    final base = RidingSettings(features: features);
+    final base = RidingSettings(features: features, standBypassIgnored: PrefsService.getBool(PrefsKeys.standBypassIgnored, false));
     final raw = PrefsService.getString(PrefsKeys.riding, '');
     if (raw.isEmpty) return base;
     final json = _decodeMap(raw);
@@ -207,6 +212,7 @@ class RidingSettings {
     bool? speedLimitEnabled,
     int? speedLimit,
     bool? standBypassPrompt,
+    bool? standBypassIgnored,
     bool? autoLockEnabled,
   }) =>
       RidingSettings(
@@ -221,6 +227,7 @@ class RidingSettings {
         speedLimitEnabled: speedLimitEnabled ?? this.speedLimitEnabled,
         speedLimit: speedLimit ?? this.speedLimit,
         standBypassPrompt: standBypassPrompt ?? this.standBypassPrompt,
+        standBypassIgnored: standBypassIgnored ?? this.standBypassIgnored,
         autoLockEnabled: autoLockEnabled ?? this.autoLockEnabled,
       );
 }
@@ -327,6 +334,7 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
         PrefsService.setBool(PrefsKeys.ridingFeature(feature.name), entry.value);
         if (feature == RidingFeature.sideStandCutOff) {
           entry.value ? PrefsService.remove(PrefsKeys.standBypassConfirmed) : PrefsService.setBool(PrefsKeys.standBypassConfirmed, true);
+          _bypassFromMicros = entry.value ? null : AnalyticsLogger.instance.monoMicros;
         }
       }
     });
@@ -335,6 +343,16 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
     vehicle.syncFeatures(settings);
     vehicle.companionRequestHandler = _companionRequest;
     vehicle.featureAckHandler = _featureAck;
+    ref.listen(vehicleProvider.select((v) => v.hintStandToRide), (_, on) {
+      if (on) _standRefused();
+    });
+    // Moving off with the stand down while bypassed: this scooter takes it.
+    ref.listen(vehicleProvider.select((v) => v.sideStand && v.vehicleState.motorOn), (_, on) {
+      if (!on || state.isOn(RidingFeature.sideStandCutOff) || !state.standBypassIgnored) return;
+      logEvent('settings', 'stand_bypass_held', {});
+      PrefsService.remove(PrefsKeys.standBypassIgnored);
+      state = state.copyWith(standBypassIgnored: false);
+    });
     // What HHMIS replayed before this provider was first read.
     final v = ref.read(vehicleProvider);
     final alarm = v.alarmSoundIndex, sensitivity = v.safetySensitivity;
@@ -386,6 +404,28 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
 
   void dismissStandBypassPrompt() => state = state.copyWith(standBypassPrompt: false);
 
+  /// How long after the bypass a stand refusal still counts as the one in
+  /// flight before it: the VCU answered a change within 1.6 s on 5.0.2.
+  static const bypassSettle = Duration(seconds: 2);
+  int? _bypassFromMicros;
+
+  /// The VCU refused over the stand (59 / 160) while we say bypassed: it
+  /// does not take the bypass (2026-11-27, Gen 1 on 4.6.14: `5B` on CAN,
+  /// HHMIS's ack, and three refusals). The sensor goes back on, sent so
+  /// the scooter stops replaying the bypass, and the rider is told.
+  void _standRefused() {
+    final from = _bypassFromMicros;
+    if (from == null || state.isOn(RidingFeature.sideStandCutOff)) return;
+    if (AnalyticsLogger.instance.monoMicros - from < bypassSettle.inMicroseconds) return;
+    logEvent('settings', 'stand_bypass_ignored', {});
+    PrefsService.setBool(PrefsKeys.standBypassIgnored, true);
+    state = state.copyWith(standBypassIgnored: true);
+    _apply(RidingFeature.sideStandCutOff, true);
+    ref.read(toastProvider.notifier).show(standBypassIgnoredMessage, type: ToastType.warning, duration: const Duration(seconds: 6));
+  }
+
+  static const standBypassIgnoredMessage = "This scooter doesn't allow the side stand bypass. Sensor back on";
+
   /// Dev panel: sets a feature without the passcode gate or warning.
   void forceFeature(RidingFeature f, bool on) => _apply(f, on);
 
@@ -395,7 +435,10 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
     logSettingsChange('riding.${f.name}', state.isOn(f), on);
     state = state.copyWith(features: {...state.features, f: on});
     PrefsService.setBool(PrefsKeys.ridingFeature(f.name), on);
-    if (f == RidingFeature.sideStandCutOff && on) PrefsService.remove(PrefsKeys.standBypassConfirmed);
+    if (f == RidingFeature.sideStandCutOff) {
+      if (on) PrefsService.remove(PrefsKeys.standBypassConfirmed);
+      _bypassFromMicros = on ? null : AnalyticsLogger.instance.monoMicros;
+    }
     final vehicle = ref.read(vehicleProvider.notifier);
     if (send) vehicle.setFeature(f, on);
     if (send && vehicle.acksFeature(f)) {

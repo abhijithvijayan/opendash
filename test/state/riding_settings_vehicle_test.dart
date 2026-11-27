@@ -442,6 +442,48 @@ void main() {
     });
   });
 
+  // 2026-11-27, Gen 1 on 4.6.14: `5B` on CAN and HHMIS's ack, then three
+  // refusals over the stand. The scooter does not take the bypass.
+  group('a bypass the scooter ignores', () {
+    test('a stand refusal after the bypass settled puts the sensor back on and says so', () {
+      fakeAsync((async) {
+        AnalyticsLogger.instance.monoOverride = () => async.elapsed.inMicroseconds;
+        final h = _Harness();
+        h.riding.forceFeature(RidingFeature.sideStandCutOff, false);
+        async.flushMicrotasks();
+        expect(h.calls.last, _int('SIDE_STAND_TOGGLE', 1));
+        h.hhmis({'BOOL_SIDE_STAND_TOGGLE_STAT': true});
+        h.hhmis({'INT_VEHICLE_COMMAND': 59});
+        async.flushMicrotasks();
+        expect(h.settings.isOn(RidingFeature.sideStandCutOff), isFalse, reason: 'one in flight before the bypass landed');
+        h.hhmis({'INT_VEHICLE_COMMAND': 0});
+        async.elapse(const Duration(seconds: 5));
+        h.hhmis({'INT_VEHICLE_COMMAND': 59});
+        async.flushMicrotasks();
+        expect(h.settings.isOn(RidingFeature.sideStandCutOff), isTrue);
+        expect(h.settings.standBypassIgnored, isTrue);
+        expect(h.calls.last, _int('SIDE_STAND_TOGGLE', 0));
+        expect(AnalyticsLogger.instance.recent('settings', 'stand_bypass_ignored'), hasLength(1));
+        expect(h.container.read(toastProvider)?.message, RidingSettingsNotifier.standBypassIgnoredMessage);
+        h.dispose();
+      });
+    });
+
+    test('a refusal with the sensor on changes nothing', () {
+      fakeAsync((async) {
+        AnalyticsLogger.instance.monoOverride = () => async.elapsed.inMicroseconds;
+        final h = _Harness();
+        final before = h.calls.length;
+        async.elapse(const Duration(seconds: 5));
+        h.hhmis({'INT_VEHICLE_COMMAND': 59});
+        async.flushMicrotasks();
+        expect(h.settings.standBypassIgnored, isFalse);
+        expect(h.calls.length, before);
+        h.dispose();
+      });
+    });
+  });
+
   group('regen (echo-driven, in-flight guard)', () {
     test('the selector moves on REGEN_SETTINGS_UPDATE, and a second pick waits for it', () {
       fakeAsync((async) {

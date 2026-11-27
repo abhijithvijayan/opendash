@@ -98,7 +98,9 @@ class RidingSection extends ConsumerWidget {
             ToggleRow(
               key: ValueKey('riding-${f.name}'),
               label: f.label,
-              caption: f.caption,
+              caption: f == RidingFeature.sideStandCutOff && s.standBypassIgnored
+                  ? "This scooter ignored the bypass last time: the stand still stopped it. Try again if its software has changed."
+                  : f.caption,
               value: s.isOn(f),
               onChanged: (on) => n.setFeature(f, on),
             ),

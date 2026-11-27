@@ -30,6 +30,10 @@ abstract final class PrefsKeys {
   /// Set only by the rider's own side-stand bypass (passcode and warning).
   /// A stored "sensor off" without it is not honoured.
   static const standBypassConfirmed = 'standBypassConfirmed';
+
+  /// The scooter refused over the stand while bypassed: its VCU does not
+  /// take the bypass. Cleared by a bypass that holds.
+  static const standBypassIgnored = 'standBypassIgnored';
   static const analyticsEnabled = 'analyticsEnabled';
   static const rideSeq = 'rideSeq';
 
