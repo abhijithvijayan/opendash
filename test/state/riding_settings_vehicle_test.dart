@@ -465,6 +465,8 @@ void main() {
         expect(h.calls.last, _int('SIDE_STAND_TOGGLE', 0));
         expect(AnalyticsLogger.instance.recent('settings', 'stand_bypass_ignored'), hasLength(1));
         expect(h.container.read(toastProvider)?.message, RidingSettingsNotifier.standBypassIgnoredMessage);
+        expect(AnalyticsLogger.instance.recent('ui', 'toast').map((e) => (e['data'] as Map)['message']),
+            isNot(contains('Side stand sensor enabled')), reason: 'one message for the revert');
         h.dispose();
       });
     });

@@ -420,7 +420,7 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
     logEvent('settings', 'stand_bypass_ignored', {});
     PrefsService.setBool(PrefsKeys.standBypassIgnored, true);
     state = state.copyWith(standBypassIgnored: true);
-    _apply(RidingFeature.sideStandCutOff, true);
+    _apply(RidingFeature.sideStandCutOff, true, toast: false);
     ref.read(toastProvider.notifier).show(standBypassIgnoredMessage, type: ToastType.warning, duration: const Duration(seconds: 6));
   }
 
@@ -430,7 +430,7 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
   void forceFeature(RidingFeature f, bool on) => _apply(f, on);
 
   /// False when the scooter lacks the feature and nothing was switched on.
-  bool _apply(RidingFeature f, bool on, {bool send = true}) {
+  bool _apply(RidingFeature f, bool on, {bool send = true, bool toast = true}) {
     if (on && !_available(f.name)) return false;
     logSettingsChange('riding.${f.name}', state.isOn(f), on);
     state = state.copyWith(features: {...state.features, f: on});
@@ -447,7 +447,7 @@ class RidingSettingsNotifier extends Notifier<RidingSettings> {
     }
     if (f == RidingFeature.autoHeadlight) vehicle.setAutoHeadlight(on);
     if (f == RidingFeature.smartHeadlight) vehicle.setSmartHeadlight(on);
-    ref.read(toastProvider.notifier).show('${f.toastName} ${on ? 'enabled' : 'disabled'}');
+    if (toast) ref.read(toastProvider.notifier).show('${f.toastName} ${on ? 'enabled' : 'disabled'}');
     return true;
   }
 
